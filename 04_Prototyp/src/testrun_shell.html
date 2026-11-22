@@ -1,0 +1,153 @@
+<title>Testlauf Incident-Tool</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap">
+<style>
+:root {
+  --bg: #fcf9f3; --surface: #ffffff; --surface-2: #fbf9f5; --ink: #1a1f2b; --muted: #646b78; --line: #ece6da; --line-2: #ddd5c6;
+  --accent: #2453c7; --accent-ink: #ffffff; --accent-soft: #e8eefc;
+  --ok: #1e7a45; --ok-soft: #e3f4e8; --warn: #c0322b; --warn-soft: #fde8e6; --amber: #8a5a00; --amber-soft: #fbf0d9;
+  --rem: #e3f4e8; --rem-ink: #1e6b3e; --ei: #fdeeec; --ei-ink: #b5392f; --hr: #f8d2cd; --hr-ink: #8f1a12;
+  --f-body: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --f-mono: "JetBrains Mono", ui-monospace, "SF Mono", Menlo, monospace;
+  --r: 8px; color-scheme: light;
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--ink); font: 14px/1.5 var(--f-body); }
+.wrap { max-width: 1180px; margin: 0 auto; padding: 0 16px; }
+header.bar { background: var(--surface); border-bottom: 1px solid var(--line); position: sticky; top: 0; z-index: 5; }
+.top { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; padding-block: 10px; }
+.brand { display: flex; align-items: center; gap: 10px; }
+.logo { width: 30px; height: 30px; border-radius: 5px; background: var(--accent); color: #fff; display: grid; place-items: center; font: 600 13px var(--f-mono); }
+.bt { font-weight: 600; font-size: 15px; }
+.bs, .hint { color: var(--muted); font-size: 12.5px; }
+.top-r { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.btn { border: 1px solid var(--line-2); background: var(--surface); color: var(--ink); border-radius: var(--r); padding: 7px 12px; font: 500 13px var(--f-body); cursor: pointer; }
+.btn:hover:not(:disabled) { border-color: var(--accent); }
+.btn.pri { background: var(--accent); border-color: var(--accent); color: #fff; }
+.btn.sm { padding: 4px 9px; font-size: 12.5px; }
+.btn:disabled { opacity: .45; cursor: not-allowed; }
+select { border: 1px solid var(--line-2); border-radius: var(--r); padding: 6px 8px; font: 13px var(--f-body); background: var(--surface); color: var(--ink); }
+main { padding-block: 20px 56px; display: flex; flex-direction: column; gap: 16px; }
+.panel { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); padding: 16px 18px; box-shadow: 0 1px 2px rgba(60,45,20,.04); }
+h1 { font-size: 20px; margin: 0 0 4px; text-wrap: balance; }
+h2 { font-size: 15px; margin: 0 0 10px; }
+p { margin: 0; }
+.lab { display: block; font: 500 11px var(--f-body); text-transform: uppercase; letter-spacing: .06em; color: var(--muted); margin-bottom: 3px; }
+.mono { font-family: var(--f-mono); font-size: 12.5px; font-variant-numeric: tabular-nums; }
+.small { font-size: 13px; }
+.intro { display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr); gap: 18px; }
+.intro ul { margin: 6px 0 0; padding-left: 18px; color: var(--muted); font-size: 13px; }
+.note { border-left: 3px solid var(--accent); background: var(--accent-soft); padding: 8px 12px; border-radius: 0 var(--r) var(--r) 0; font-size: 13px; }
+.note.warn { border-color: var(--warn); background: var(--warn-soft); }
+.kpis { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 10px; }
+.kpi { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); padding: 12px 14px; display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.kv { font: 600 24px var(--f-body); font-variant-numeric: tabular-nums; }
+.kv small { font-size: 14px; color: var(--muted); font-weight: 500; }
+.kpi.good { border-color: #b7dcc4; background: var(--ok-soft); } .kpi.good .kv { color: var(--ok); }
+.kpi.bad { border-color: #f1bdb8; background: var(--warn-soft); } .kpi.bad .kv { color: var(--warn); }
+.kpi.warnish .kv { color: var(--amber); }
+.two { display: flex; flex-direction: column-reverse; gap: 16px; }
+#checks { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); column-gap: 28px; }
+#checks .hint { grid-column: 1 / -1; }
+.cb { display: grid; grid-template-columns: 110px minmax(0, 1fr) 48px; gap: 10px; align-items: center; padding: 3px 0; font-size: 13px; }
+.cb-bar { height: 8px; background: var(--line); border-radius: 4px; overflow: hidden; }
+.cb-bar i { display: block; height: 100%; background: var(--accent); border-radius: 4px; }
+.cb-bar i.full { background: var(--ok); } .cb-bar i.low { background: var(--warn); }
+.cb-v { text-align: right; }
+#checks .hint { margin-top: 8px; }
+.filters { display: inline-flex; border: 1px solid var(--line-2); border-radius: var(--r); overflow: hidden; }
+.filters button { border: 0; background: transparent; padding: 5px 10px; font: 500 12.5px var(--f-body); color: var(--muted); cursor: pointer; }
+.filters button.on { background: var(--accent); color: #fff; }
+.listhead { display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 10px; }
+.tc { border: 1px solid var(--line); border-radius: var(--r); background: var(--surface); margin-bottom: 8px; overflow: hidden; }
+.tc.pass { border-left: 3px solid var(--ok); } .tc.fail { border-left: 3px solid var(--warn); }
+.tc-h { width: 100%; border: 0; background: transparent; text-align: left; cursor: pointer; display: grid; grid-template-columns: 44px minmax(0, 1fr) 190px 160px 220px 18px; gap: 12px; align-items: center; padding: 10px 14px; font: inherit; color: inherit; }
+.tc-h:hover { background: var(--surface-2); }
+.tc-t { display: flex; flex-direction: column; min-width: 0; }
+.tc-lv { display: flex; flex-wrap: wrap; gap: 3px; align-items: center; }
+.tc-lv .lab { width: 100%; margin: 0; }
+.tc-r { display: flex; flex-wrap: wrap; gap: 4px; align-items: center; }
+.chev { color: var(--muted); font-size: 16px; text-align: center; }
+.lvl { display: inline-block; font: 600 11px var(--f-body); padding: 1px 6px; border-radius: 4px; white-space: nowrap; }
+.lv-rem { background: var(--rem); color: var(--rem-ink); } .lv-ei { background: var(--ei); color: var(--ei-ink); } .lv-hr { background: var(--hr); color: var(--hr-ink); }
+.lv-open { background: var(--line); color: var(--muted); }
+.tag { font: 600 11.5px var(--f-body); padding: 2px 7px; border-radius: 4px; white-space: nowrap; }
+.tag.ok { background: var(--ok-soft); color: var(--ok); } .tag.bad { background: var(--warn-soft); color: var(--warn); } .tag.neutral { background: var(--amber-soft); color: var(--amber); }
+.tc-b { border-top: 1px solid var(--line); padding: 14px; background: var(--surface-2); }
+.tc-grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.1fr); gap: 18px; }
+.stack { display: flex; flex-direction: column; gap: 12px; min-width: 0; }
+blockquote { margin: 0; padding: 8px 12px; background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); font-size: 13px; }
+table.cmp { width: 100%; border-collapse: collapse; font-size: 12.5px; background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); }
+.cmp th, .cmp td { text-align: left; padding: 5px 8px; border-bottom: 1px solid var(--line); vertical-align: top; }
+.cmp thead th { font-weight: 500; color: var(--muted); font-size: 11.5px; }
+.cmp tbody th { font-weight: 500; white-space: nowrap; }
+.cmp tr.neg td { background: var(--warn-soft); }
+.mk { font-weight: 700; } .mk.ok { color: var(--ok); } .mk.bad { color: var(--warn); } .mk.na { color: var(--line-2); }
+details { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); padding: 6px 10px; font-size: 13px; }
+summary { cursor: pointer; color: var(--accent); font-weight: 500; }
+pre { white-space: pre-wrap; word-break: break-word; font: 11.5px/1.45 var(--f-mono); max-height: 320px; overflow: auto; margin: 8px 0 0; }
+.dl { margin: 8px 0 0; } .dl dt { font-weight: 600; font-size: 12px; margin-top: 6px; } .dl dd { margin: 0; }
+.row { display: flex; gap: 8px; flex-wrap: wrap; }
+.spin { width: 12px; height: 12px; border: 2px solid var(--accent-soft); border-top-color: var(--accent); border-radius: 50%; display: inline-block; animation: sp 0.8s linear infinite; }
+@keyframes sp { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) { .spin { animation: none; } }
+#exmsg { min-height: 18px; }
+@media (max-width: 960px) {
+  .kpis { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .intro, .tc-grid { grid-template-columns: minmax(0, 1fr); }
+  #checks { grid-template-columns: minmax(0, 1fr); }
+  .tc-h { grid-template-columns: 40px minmax(0, 1fr) 18px; }
+  .tc-lv, .tc-r { grid-column: 2; }
+}
+@media (max-width: 520px) { .kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+</style>
+
+<header class="bar"><div class="wrap top">
+  <div class="brand"><div class="logo">QA</div><div><div class="bt">Testlauf Incident-Tool</div><div class="bs">Für das Projektteam · nicht Teil des Tools</div></div></div>
+  <div class="top-r">
+    <span class="hint" id="status"></span>
+    <label class="hint" for="tier">Modell</label>
+    <select id="tier"><option value="quick">schnell</option><option value="default">Standard (wie im Tool)</option><option value="complex">gründlich</option></select>
+    <button class="btn pri" id="run">Alle Fälle starten</button>
+    <button class="btn" id="stop">Stopp</button>
+  </div>
+</div></header>
+
+<main class="wrap">
+  <section class="panel intro">
+    <div>
+      <h1>Wie gut erfasst der Assistent Meldungen?</h1>
+      <p class="small">Der Testlauf schickt <b id="ncases">20</b> fiktive Meldungen mit genau denselben Anweisungen, Auszügen aus den Weisungen, Verzeichnis und Katalog wie das Incident-Tool an das Sprachmodell. Er wertet den ersten Durchgang der Fallerfassung aus, also ohne Antworten auf Rückfragen. Incident Level, Pattern Aggregation und Sonderregeln rechnet das Tool wie im Echtbetrieb aus den Ist-Werten.</p>
+      <ul>
+        <li>Pro Fall ein Soll mit zulässigen Werten, wo die Weisung Spielraum lässt (z. B. Risk Low oder Medium).</li>
+        <li>«Level zu tief» ist der kritische Fehler: Ein Fall würde unterschätzt.</li>
+        <li>Die Ergebnisse schwanken von Lauf zu Lauf leicht. Für den Bericht mehrere Läufe vergleichen.</li>
+      </ul>
+    </div>
+    <div class="stack">
+      <div class="note">Geprüft werden Person, Verstoss ja/nein, Policy, gültige Quelle, Risk, Behavior, Sonderregel, Datum, Meldeweg, Incident Level und ob die meldende Person in den Texten genannt wird.</div>
+      <div class="note warn" id="noai" hidden>Die KI-Verbindung ist in dieser Ansicht nicht verfügbar. Öffne den Testlauf auf claude.ai, um ihn zu starten. Der Testfallkatalog unten ist trotzdem lesbar.</div>
+      <div class="row"><button class="btn sm" id="exMd">Bericht herunterladen (.md)</button><button class="btn sm" id="exCsv">Tabelle herunterladen (.csv)</button></div>
+      <p class="hint" id="exmsg"></p>
+    </div>
+  </section>
+
+  <section class="kpis" id="kpis" aria-label="Kennzahlen"></section>
+
+  <section class="two">
+    <div class="panel">
+      <div class="listhead">
+        <h2 style="margin:0">Testfälle</h2>
+        <div class="row">
+          <div class="filters"><button class="on" data-act="filter" data-v="alle">Alle</button><button data-act="filter" data-v="fehl">Abweichungen</button><button data-act="filter" data-v="ok">Bestanden</button></div>
+          <button class="btn sm" data-act="openAll">Alle auf/zu</button>
+        </div>
+      </div>
+      <div id="rows"></div>
+    </div>
+    <div class="panel">
+      <h2>Trefferquote je Prüfpunkt</h2>
+      <div id="checks"></div>
+    </div>
+  </section>
+</main>

@@ -1,0 +1,1119 @@
+<!doctype html><html lang="de"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head><body>
+<title>Testlauf Incident-Tool</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap">
+<style>
+:root {
+  --bg: #fcf9f3; --surface: #ffffff; --surface-2: #fbf9f5; --ink: #1a1f2b; --muted: #646b78; --line: #ece6da; --line-2: #ddd5c6;
+  --accent: #2453c7; --accent-ink: #ffffff; --accent-soft: #e8eefc;
+  --ok: #1e7a45; --ok-soft: #e3f4e8; --warn: #c0322b; --warn-soft: #fde8e6; --amber: #8a5a00; --amber-soft: #fbf0d9;
+  --rem: #e3f4e8; --rem-ink: #1e6b3e; --ei: #fdeeec; --ei-ink: #b5392f; --hr: #f8d2cd; --hr-ink: #8f1a12;
+  --f-body: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --f-mono: "JetBrains Mono", ui-monospace, "SF Mono", Menlo, monospace;
+  --r: 8px; color-scheme: light;
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--ink); font: 14px/1.5 var(--f-body); }
+.wrap { max-width: 1180px; margin: 0 auto; padding: 0 16px; }
+header.bar { background: var(--surface); border-bottom: 1px solid var(--line); position: sticky; top: 0; z-index: 5; }
+.top { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; padding-block: 10px; }
+.brand { display: flex; align-items: center; gap: 10px; }
+.logo { width: 30px; height: 30px; border-radius: 5px; background: var(--accent); color: #fff; display: grid; place-items: center; font: 600 13px var(--f-mono); }
+.bt { font-weight: 600; font-size: 15px; }
+.bs, .hint { color: var(--muted); font-size: 12.5px; }
+.top-r { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.btn { border: 1px solid var(--line-2); background: var(--surface); color: var(--ink); border-radius: var(--r); padding: 7px 12px; font: 500 13px var(--f-body); cursor: pointer; }
+.btn:hover:not(:disabled) { border-color: var(--accent); }
+.btn.pri { background: var(--accent); border-color: var(--accent); color: #fff; }
+.btn.sm { padding: 4px 9px; font-size: 12.5px; }
+.btn:disabled { opacity: .45; cursor: not-allowed; }
+select { border: 1px solid var(--line-2); border-radius: var(--r); padding: 6px 8px; font: 13px var(--f-body); background: var(--surface); color: var(--ink); }
+main { padding-block: 20px 56px; display: flex; flex-direction: column; gap: 16px; }
+.panel { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); padding: 16px 18px; box-shadow: 0 1px 2px rgba(60,45,20,.04); }
+h1 { font-size: 20px; margin: 0 0 4px; text-wrap: balance; }
+h2 { font-size: 15px; margin: 0 0 10px; }
+p { margin: 0; }
+.lab { display: block; font: 500 11px var(--f-body); text-transform: uppercase; letter-spacing: .06em; color: var(--muted); margin-bottom: 3px; }
+.mono { font-family: var(--f-mono); font-size: 12.5px; font-variant-numeric: tabular-nums; }
+.small { font-size: 13px; }
+.intro { display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr); gap: 18px; }
+.intro ul { margin: 6px 0 0; padding-left: 18px; color: var(--muted); font-size: 13px; }
+.note { border-left: 3px solid var(--accent); background: var(--accent-soft); padding: 8px 12px; border-radius: 0 var(--r) var(--r) 0; font-size: 13px; }
+.note.warn { border-color: var(--warn); background: var(--warn-soft); }
+.kpis { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 10px; }
+.kpi { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); padding: 12px 14px; display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.kv { font: 600 24px var(--f-body); font-variant-numeric: tabular-nums; }
+.kv small { font-size: 14px; color: var(--muted); font-weight: 500; }
+.kpi.good { border-color: #b7dcc4; background: var(--ok-soft); } .kpi.good .kv { color: var(--ok); }
+.kpi.bad { border-color: #f1bdb8; background: var(--warn-soft); } .kpi.bad .kv { color: var(--warn); }
+.kpi.warnish .kv { color: var(--amber); }
+.two { display: flex; flex-direction: column-reverse; gap: 16px; }
+#checks { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); column-gap: 28px; }
+#checks .hint { grid-column: 1 / -1; }
+.cb { display: grid; grid-template-columns: 110px minmax(0, 1fr) 48px; gap: 10px; align-items: center; padding: 3px 0; font-size: 13px; }
+.cb-bar { height: 8px; background: var(--line); border-radius: 4px; overflow: hidden; }
+.cb-bar i { display: block; height: 100%; background: var(--accent); border-radius: 4px; }
+.cb-bar i.full { background: var(--ok); } .cb-bar i.low { background: var(--warn); }
+.cb-v { text-align: right; }
+#checks .hint { margin-top: 8px; }
+.filters { display: inline-flex; border: 1px solid var(--line-2); border-radius: var(--r); overflow: hidden; }
+.filters button { border: 0; background: transparent; padding: 5px 10px; font: 500 12.5px var(--f-body); color: var(--muted); cursor: pointer; }
+.filters button.on { background: var(--accent); color: #fff; }
+.listhead { display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 10px; }
+.tc { border: 1px solid var(--line); border-radius: var(--r); background: var(--surface); margin-bottom: 8px; overflow: hidden; }
+.tc.pass { border-left: 3px solid var(--ok); } .tc.fail { border-left: 3px solid var(--warn); }
+.tc-h { width: 100%; border: 0; background: transparent; text-align: left; cursor: pointer; display: grid; grid-template-columns: 44px minmax(0, 1fr) 190px 160px 220px 18px; gap: 12px; align-items: center; padding: 10px 14px; font: inherit; color: inherit; }
+.tc-h:hover { background: var(--surface-2); }
+.tc-t { display: flex; flex-direction: column; min-width: 0; }
+.tc-lv { display: flex; flex-wrap: wrap; gap: 3px; align-items: center; }
+.tc-lv .lab { width: 100%; margin: 0; }
+.tc-r { display: flex; flex-wrap: wrap; gap: 4px; align-items: center; }
+.chev { color: var(--muted); font-size: 16px; text-align: center; }
+.lvl { display: inline-block; font: 600 11px var(--f-body); padding: 1px 6px; border-radius: 4px; white-space: nowrap; }
+.lv-rem { background: var(--rem); color: var(--rem-ink); } .lv-ei { background: var(--ei); color: var(--ei-ink); } .lv-hr { background: var(--hr); color: var(--hr-ink); }
+.lv-open { background: var(--line); color: var(--muted); }
+.tag { font: 600 11.5px var(--f-body); padding: 2px 7px; border-radius: 4px; white-space: nowrap; }
+.tag.ok { background: var(--ok-soft); color: var(--ok); } .tag.bad { background: var(--warn-soft); color: var(--warn); } .tag.neutral { background: var(--amber-soft); color: var(--amber); }
+.tc-b { border-top: 1px solid var(--line); padding: 14px; background: var(--surface-2); }
+.tc-grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.1fr); gap: 18px; }
+.stack { display: flex; flex-direction: column; gap: 12px; min-width: 0; }
+blockquote { margin: 0; padding: 8px 12px; background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); font-size: 13px; }
+table.cmp { width: 100%; border-collapse: collapse; font-size: 12.5px; background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); }
+.cmp th, .cmp td { text-align: left; padding: 5px 8px; border-bottom: 1px solid var(--line); vertical-align: top; }
+.cmp thead th { font-weight: 500; color: var(--muted); font-size: 11.5px; }
+.cmp tbody th { font-weight: 500; white-space: nowrap; }
+.cmp tr.neg td { background: var(--warn-soft); }
+.mk { font-weight: 700; } .mk.ok { color: var(--ok); } .mk.bad { color: var(--warn); } .mk.na { color: var(--line-2); }
+details { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); padding: 6px 10px; font-size: 13px; }
+summary { cursor: pointer; color: var(--accent); font-weight: 500; }
+pre { white-space: pre-wrap; word-break: break-word; font: 11.5px/1.45 var(--f-mono); max-height: 320px; overflow: auto; margin: 8px 0 0; }
+.dl { margin: 8px 0 0; } .dl dt { font-weight: 600; font-size: 12px; margin-top: 6px; } .dl dd { margin: 0; }
+.row { display: flex; gap: 8px; flex-wrap: wrap; }
+.spin { width: 12px; height: 12px; border: 2px solid var(--accent-soft); border-top-color: var(--accent); border-radius: 50%; display: inline-block; animation: sp 0.8s linear infinite; }
+@keyframes sp { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) { .spin { animation: none; } }
+#exmsg { min-height: 18px; }
+@media (max-width: 960px) {
+  .kpis { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .intro, .tc-grid { grid-template-columns: minmax(0, 1fr); }
+  #checks { grid-template-columns: minmax(0, 1fr); }
+  .tc-h { grid-template-columns: 40px minmax(0, 1fr) 18px; }
+  .tc-lv, .tc-r { grid-column: 2; }
+}
+@media (max-width: 520px) { .kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+</style>
+
+<header class="bar"><div class="wrap top">
+  <div class="brand"><div class="logo">QA</div><div><div class="bt">Testlauf Incident-Tool</div><div class="bs">Für das Projektteam · nicht Teil des Tools</div></div></div>
+  <div class="top-r">
+    <span class="hint" id="status"></span>
+    <label class="hint" for="tier">Modell</label>
+    <select id="tier"><option value="quick">schnell</option><option value="default">Standard (wie im Tool)</option><option value="complex">gründlich</option></select>
+    <button class="btn pri" id="run">Alle Fälle starten</button>
+    <button class="btn" id="stop">Stopp</button>
+  </div>
+</div></header>
+
+<main class="wrap">
+  <section class="panel intro">
+    <div>
+      <h1>Wie gut erfasst der Assistent Meldungen?</h1>
+      <p class="small">Der Testlauf schickt <b id="ncases">20</b> fiktive Meldungen mit genau denselben Anweisungen, Auszügen aus den Weisungen, Verzeichnis und Katalog wie das Incident-Tool an das Sprachmodell. Er wertet den ersten Durchgang der Fallerfassung aus, also ohne Antworten auf Rückfragen. Incident Level, Pattern Aggregation und Sonderregeln rechnet das Tool wie im Echtbetrieb aus den Ist-Werten.</p>
+      <ul>
+        <li>Pro Fall ein Soll mit zulässigen Werten, wo die Weisung Spielraum lässt (z. B. Risk Low oder Medium).</li>
+        <li>«Level zu tief» ist der kritische Fehler: Ein Fall würde unterschätzt.</li>
+        <li>Die Ergebnisse schwanken von Lauf zu Lauf leicht. Für den Bericht mehrere Läufe vergleichen.</li>
+      </ul>
+    </div>
+    <div class="stack">
+      <div class="note">Geprüft werden Person, Verstoss ja/nein, Policy, gültige Quelle, Risk, Behavior, Sonderregel, Datum, Meldeweg, Incident Level und ob die meldende Person in den Texten genannt wird.</div>
+      <div class="note warn" id="noai" hidden>Die KI-Verbindung ist in dieser Ansicht nicht verfügbar. Öffne den Testlauf auf claude.ai, um ihn zu starten. Der Testfallkatalog unten ist trotzdem lesbar.</div>
+      <div class="row"><button class="btn sm" id="exMd">Bericht herunterladen (.md)</button><button class="btn sm" id="exCsv">Tabelle herunterladen (.csv)</button></div>
+      <p class="hint" id="exmsg"></p>
+    </div>
+  </section>
+
+  <section class="kpis" id="kpis" aria-label="Kennzahlen"></section>
+
+  <section class="two">
+    <div class="panel">
+      <div class="listhead">
+        <h2 style="margin:0">Testfälle</h2>
+        <div class="row">
+          <div class="filters"><button class="on" data-act="filter" data-v="alle">Alle</button><button data-act="filter" data-v="fehl">Abweichungen</button><button data-act="filter" data-v="ok">Bestanden</button></div>
+          <button class="btn sm" data-act="openAll">Alle auf/zu</button>
+        </div>
+      </div>
+      <div id="rows"></div>
+    </div>
+    <div class="panel">
+      <h2>Trefferquote je Prüfpunkt</h2>
+      <div id="checks"></div>
+    </div>
+  </section>
+</main>
+
+<script>
+// ===== Fiktive Daten: Musterbank AG (alle Angaben fiktiv) =====
+
+// Katalog der Risiko-Codes (Vorschlag; offener Punkt im Ist-/Soll-Prozess)
+const CATALOG = [
+  { code: "IS-01", bereich: "Informationssicherheit", name: "Weitergabe von Zugangsdaten", weisung: "W-03", ziffer: "Ziff. 5.1 Nr. 1",
+    zitat: "Zugangsdaten, Passwörter, PIN und Einmalcodes sind persönlich und dürfen nie weitergegeben werden, auch nicht an Vorgesetzte oder an Personen, die sich als IT-Support ausgeben.",
+    zweck: "Konten und Systeme der Bank vor Missbrauch zu schützen", hinweis: "Geben Sie Zugangsdaten und Einmalcodes nie weiter. Die IT fragt nie nach Passwörtern." },
+  { code: "IS-02", bereich: "Informationssicherheit", name: "Bildschirmsperre und Clean Desk", weisung: "W-03", ziffer: "Ziff. 5.1 Nr. 3; Ziff. 5.2 Nr. 2",
+    zitat: "Der Bildschirm wird beim Verlassen des Arbeitsplatzes gesperrt (Windows-Taste + L).",
+    zweck: "zu verhindern, dass Unbefugte Informationen der Bank einsehen", hinweis: "Sperren Sie den Bildschirm mit Windows-Taste + L, sobald Sie den Arbeitsplatz verlassen, auch für kurze Zeit." },
+  { code: "IS-03", bereich: "Informationssicherheit", name: "Geschäftsinformationen auf privaten Kanälen oder Speichern", weisung: "W-03", ziffer: "Ziff. 5.2 Nr. 3",
+    zitat: "Geschäftliche Informationen dürfen nicht an private E-Mail-Konten weitergeleitet, auf private Speichermedien kopiert oder in nicht freigegebenen Cloud- oder KI-Diensten gespeichert werden.",
+    zweck: "Geschäftsinformationen innerhalb der geschützten Systeme der Bank zu halten", hinweis: "Bearbeiten Sie Geschäftsinformationen nur in den Systemen der Bank. Für Arbeit unterwegs steht der VPN-Zugang zur Verfügung." },
+  { code: "IS-04", bereich: "Informationssicherheit", name: "Nicht freigegebene Software", weisung: "W-03", ziffer: "Ziff. 5.3 Nr. 1",
+    zitat: "Es darf nur Software verwendet werden, die über den Software-Katalog der Bank bezogen wurde.",
+    zweck: "Schadsoftware und unkontrollierte Datenabflüsse zu verhindern", hinweis: "Beziehen Sie Software ausschliesslich über den Software-Katalog der Bank." },
+  { code: "IS-05", bereich: "Informationssicherheit", name: "Verspätete Meldung eines Sicherheitsvorfalls", weisung: "W-03", ziffer: "Ziff. 6.2",
+    zitat: "Verzögerte oder unterlassene Meldungen gelten dagegen als Pflichtverletzung.",
+    zweck: "Angriffe rasch einzudämmen", hinweis: "Melden Sie einen Klick auf einen verdächtigen Link sofort, spätestens innert 30 Minuten, an die IT-Security-Hotline 5555." },
+  { code: "IS-06", bereich: "Informationssicherheit", name: "Unverschlüsselte externe Übermittlung", weisung: "W-03", ziffer: "Ziff. 5.2 Nr. 1",
+    zitat: "«Vertraulich» und «Streng vertraulich» dürfen nur verschlüsselt extern übermittelt werden.",
+    zweck: "vertrauliche Informationen auf dem Übermittlungsweg zu schützen", hinweis: "Versenden Sie vertrauliche Dokumente extern nur verschlüsselt." },
+  { code: "DS-01", bereich: "Datenschutz", name: "Fehlversand von Personen- oder Kundendaten", weisung: "W-02", ziffer: "Ziff. 5 Nr. 4; Ziff. 6.1",
+    zitat: "Personendaten werden durch technische und organisatorische Massnahmen geschützt (vgl. W-03).",
+    zweck: "Kundendaten und das Bankkundengeheimnis zu schützen", hinweis: "Prüfen Sie vor dem Versand von Kundendaten die Empfängeradresse, besonders wenn die Autovervollständigung eine Adresse vorschlägt." },
+  { code: "DS-02", bereich: "Datenschutz", name: "Zugriff ohne Arbeitsauftrag (Neugierabfrage)", weisung: "W-02", ziffer: "Ziff. 5 Nr. 3",
+    zitat: "Mitarbeitende greifen nur auf Kunden- und Mitarbeitendendaten zu, die sie für ihre konkrete Aufgabe benötigen. […] Neugierabfragen (z.B. Konto von Prominenten, Nachbarn, Familienangehörigen oder Arbeitskolleginnen) sind verboten.",
+    zweck: "die Privatsphäre von Kundschaft und Mitarbeitenden zu schützen", hinweis: "Greifen Sie nur auf Daten zu, die Sie für einen konkreten Arbeitsauftrag benötigen." },
+  { code: "DS-03", bereich: "Datenschutz", name: "Kundendaten in nicht freigegebenem KI-Dienst", weisung: "W-02", ziffer: "Ziff. 5 Nr. 5",
+    zitat: "Öffentlich zugängliche KI-Chatbots und ähnliche Dienste ohne entsprechende Vereinbarung und Freigabe der Bank dürfen nicht für Personendaten, Kundendaten (CID), besonders schützenswerte Personendaten oder sonstige als «Vertraulich» oder «Streng vertraulich» klassifizierte Informationen verwendet werden.",
+    zweck: "Kundendaten nicht an Dritte gelangen zu lassen", hinweis: "Verwenden Sie für Personen- und Kundendaten nur die von CISO und Datenschutzberatung freigegebenen KI-Werkzeuge." },
+  { code: "GE-01", bereich: "Geschenke und Einladungen", name: "Vorteil über der Wertgrenze ohne Bewilligung", weisung: "W-05", ziffer: "Ziff. 5.2; Ziff. 5.3",
+    zitat: "Bewilligungspflichtige Vorteile werden vorgängig über das Formular «Geschenke und Einladungen» in IncidentNet beantragt.",
+    zweck: "die Unabhängigkeit der Mitarbeitenden zu schützen", hinweis: "Beantragen Sie Geschenke über CHF 200 und Einladungen über CHF 300 vorgängig über das Formular «Geschenke und Einladungen»." },
+  { code: "GE-02", bereich: "Geschenke und Einladungen", name: "Bargeld oder bargeldähnliche Mittel", weisung: "W-05", ziffer: "Ziff. 5.1 Nr. 3",
+    zitat: "Bargeld und bargeldähnliche Mittel dürfen weder angenommen noch gewährt werden, unabhängig vom Betrag.",
+    zweck: "Bestechung und Interessenkonflikte zu verhindern", hinweis: "Lehnen Sie Bargeld, Gutscheine und Geschenkkarten immer ab." },
+  { code: "GE-03", bereich: "Geschenke und Einladungen", name: "Vorteil während Ausschreibung oder Entscheid", weisung: "W-05", ziffer: "Ziff. 5.1 Nr. 4",
+    zitat: "Vorteile sind unzulässig während laufender Ausschreibungen, Vertragsverhandlungen oder Kreditentscheide mit dem betreffenden Geschäftspartner.",
+    zweck: "Geschäftsentscheide frei von Beeinflussung zu halten", hinweis: "Lehnen Sie während laufender Ausschreibungen oder Verhandlungen jeden Vorteil des betreffenden Geschäftspartners ab." },
+  { code: "IK-01", bereich: "Interessenkonflikte", name: "Nicht offengelegter Interessenkonflikt", weisung: "W-04", ziffer: "Ziff. 6",
+    zitat: "Nicht offengelegte Interessenkonflikte, auch wenn sie eigene sind und nachträglich erkannt werden",
+    zweck: "Kundschaft und Bank vor Interessenkonflikten zu schützen", hinweis: "Legen Sie Interessenkonflikte über das Formular «Offenlegung Interessenkonflikt» offen, vor einem betroffenen Entscheid sofort." },
+  { code: "MV-01", bereich: "Marktverhalten", name: "Mitarbeitergeschäft ohne Vorabbewilligung", weisung: "W-06", ziffer: "Ziff. 5.3",
+    zitat: "Mitarbeitende in Vertraulichkeitsbereichen holen vor jedem Geschäft in Einzeltiteln (Aktien, Obligationen, Derivate darauf) eine Vorabbewilligung über das Tool «PA-Dealing» ein.",
+    zweck: "Insiderhandel und Interessenkonflikte zu verhindern", hinweis: "Holen Sie vor jedem Geschäft in Einzeltiteln die Vorabbewilligung im Tool «PA-Dealing» ein." },
+  { code: "MV-02", bereich: "Marktverhalten", name: "Mindesthaltedauer verletzt", weisung: "W-06", ziffer: "Ziff. 5.3",
+    zitat: "30 Kalendertage für Einzeltitel und Derivate. Ausnahmen (z.B. Notfall) nur mit Bewilligung von Compliance.",
+    zweck: "kurzfristige Spekulation mit Informationsvorsprung zu verhindern", hinweis: "Halten Sie Einzeltitel und Derivate mindestens 30 Kalendertage oder holen Sie vorgängig die Zustimmung von Compliance ein." },
+  { code: "MV-03", bereich: "Marktverhalten", name: "Nicht freigegebener Kommunikationskanal", weisung: "W-06", ziffer: "Ziff. 5.4",
+    zitat: "Mitarbeitende in Vertraulichkeitsbereichen und im Handel kommunizieren geschäftlich ausschliesslich über die von der Bank freigegebenen Kanäle.",
+    zweck: "die vorgeschriebene Aufzeichnung der Geschäftskommunikation sicherzustellen", hinweis: "Nutzen Sie für geschäftliche Kommunikation nur die freigegebenen Kanäle der Bank." },
+  { code: "KU-01", bereich: "Kontrollumgehung", name: "Vier-Augen-Prinzip umgangen oder Selbstfreigabe", weisung: "W-10", ziffer: "Ziff. 5 Nr. 2; E-03 Ziff. 3 Nr. 1",
+    zitat: "Zahlungen, Stammdatenänderungen (insbesondere Adressen, Kontoverbindungen) und Kreditauszahlungen erfolgen nach dem Vier-Augen-Prinzip.",
+    zweck: "Fehler und Betrug im Zahlungsverkehr zu verhindern", hinweis: "Lassen Sie Zahlungen und Stammdatenänderungen immer von einer zweiten Person freigeben." },
+  { code: "KU-02", bereich: "Kontrollumgehung", name: "Rückrufprinzip missachtet", weisung: "W-10", ziffer: "Ziff. 5 Nr. 3",
+    zitat: "Ungewöhnliche Zahlungsaufträge, Aufträge per E-Mail oder Telefon und geänderte Zahlungsverbindungen werden über eine bekannte, unabhängig ermittelte Telefonnummer verifiziert.",
+    zweck: "Zahlungen an Betrüger zu verhindern", hinweis: "Verifizieren Sie geänderte Zahlungsverbindungen immer über eine bekannte, unabhängig ermittelte Telefonnummer." }
+];
+
+// Fiktives Mitarbeiterverzeichnis (20 Personen)
+const DIRECTORY = [
+  { id: "P-10003", name: "Urs Baumann", stufe: "Direktion", funktion: "Leiter Private Banking", abteilung: "Private Banking", lm: "Rolf Zimmermann (GL)", hoeheresMgmt: true },
+  { id: "P-10012", name: "Sandra Vogel", stufe: "Kader", funktion: "Teamleiterin", abteilung: "Private Banking Zürich 2", lm: "Urs Baumann" },
+  { id: "P-10231", name: "Marco Keller", stufe: "Mitarbeitende", funktion: "Kundenberater", abteilung: "Private Banking Zürich 2", lm: "Sandra Vogel" },
+  { id: "P-10455", name: "Sarah Widmer", stufe: "Mitarbeitende", funktion: "Kundenberaterin", abteilung: "Private Banking Zürich 2", lm: "Sandra Vogel" },
+  { id: "P-10655", name: "Simon Kuhn", stufe: "Mitarbeitende", funktion: "Kundenberater", abteilung: "Private Banking Bern", lm: "Beat Moser" },
+  { id: "P-10044", name: "Reto Gerber", stufe: "Kader", funktion: "Teamleiter", abteilung: "Firmenkunden KMU Ost", lm: "Karin Steiner" },
+  { id: "P-10318", name: "Nina Ammann", stufe: "Mitarbeitende", funktion: "Kundenberaterin Firmenkunden", abteilung: "Firmenkunden KMU Ost", lm: "Reto Gerber" },
+  { id: "P-10081", name: "Daniela Frei", stufe: "Kader", funktion: "Leiterin Kreditadministration", abteilung: "Kredit Firmenkunden", lm: "Karin Steiner" },
+  { id: "P-10512", name: "Jonas Weber", stufe: "Mitarbeitende", funktion: "Kreditspezialist", abteilung: "Kredit Firmenkunden", lm: "Daniela Frei" },
+  { id: "P-10090", name: "Claudia Rossi", stufe: "Kader", funktion: "Leiterin Einkauf", abteilung: "Einkauf und Lieferantenmanagement", lm: "Martin Schaller" },
+  { id: "P-10577", name: "Stefan Meier", stufe: "Mitarbeitende", funktion: "Einkäufer IT", abteilung: "Einkauf und Lieferantenmanagement", lm: "Claudia Rossi" },
+  { id: "P-10061", name: "Patrick Imhof", stufe: "Direktion", funktion: "Head Trading", abteilung: "Handel", lm: "Martin Schaller" },
+  { id: "P-10402", name: "Lukas Schmid", stufe: "Mitarbeitende", funktion: "Händler Aktien", abteilung: "Handel", lm: "Patrick Imhof" },
+  { id: "P-10070", name: "Andrea Lang", stufe: "Kader", funktion: "Teamleiterin Zahlungsverkehr", abteilung: "Operations", lm: "Martin Schaller" },
+  { id: "P-10466", name: "Marco Kessler", stufe: "Mitarbeitende", funktion: "Spezialist Zahlungsverkehr", abteilung: "Operations", lm: "Andrea Lang" },
+  { id: "P-10622", name: "Fabian Graf", stufe: "Lernende", funktion: "Lernender KV", abteilung: "Operations", lm: "Andrea Lang" },
+  { id: "P-10095", name: "Thomas Brunner", stufe: "Kader", funktion: "Leiter IT-Betrieb", abteilung: "IT-Betrieb", lm: "Martin Schaller" },
+  { id: "P-10601", name: "Elena Marti", stufe: "Mitarbeitende", funktion: "Systemadministratorin", abteilung: "IT-Betrieb", lm: "Thomas Brunner" },
+  { id: "P-10533", name: "Laura Fischer", stufe: "Mitarbeitende", funktion: "Compliance-Analystin", abteilung: "Compliance", lm: "Michael Huber" },
+  { id: "P-10640", name: "Petra Huber", stufe: "Mitarbeitende", funktion: "HR Business Partner", abteilung: "HR", lm: "Susanne Roth" }
+];
+
+// Fallhistorie (Datum = Information der Person, Start des 12-Monats-Fensters)
+const HISTORY = [
+  { ref: "INC-2024-00877", person: "P-10231", code: "DS-01", level: "Reminder", informed: "2024-09-12", status: "abgeschlossen", titel: "E-Mail mit Kundendaten an falschen internen Empfänger" },
+  { ref: "INC-2026-00142", person: "P-10231", code: "IS-02", level: "Reminder", informed: "2026-02-03", status: "abgeschlossen", titel: "Bildschirm im Kundenbereich nicht gesperrt" },
+  { ref: "INC-2026-00655", person: "P-10231", code: "IS-03", level: "Reminder", informed: "2026-08-20", status: "Appeal hängig", titel: "Präsentation an private E-Mail-Adresse weitergeleitet" },
+  { ref: "INC-2026-00301", person: "P-10466", code: "KU-02", level: "Reminder", informed: "2026-04-02", status: "abgeschlossen", titel: "Geänderte Zahlungsverbindung ohne Rückruf erfasst" },
+  { ref: "INC-2026-00210", person: "P-10318", code: "IS-03", level: "Reminder", informed: "2026-03-10", status: "abgeschlossen", titel: "Offerte an privates E-Mail-Konto gesendet" },
+  { ref: "INC-2026-00488", person: "P-10318", code: "GE-01", level: "Reminder", informed: "2026-06-22", status: "abgeschlossen", titel: "Konzerteinladung über CHF 300 nicht beantragt" },
+  { ref: "INC-2025-01102", person: "P-10577", code: "GE-01", level: "Reminder", informed: "2025-12-01", status: "abgeschlossen", titel: "Geschenkkorb eines Lieferanten nicht gemeldet" },
+  { ref: "INC-2026-00390", person: "P-10402", code: "MV-01", level: "Employee Incident", informed: "2026-05-14", status: "abgeschlossen", titel: "Aktienkauf ohne Vorabbewilligung" },
+  { ref: "INC-2025-00954", person: "P-10455", code: "IS-02", level: "Reminder", informed: "2025-06-30", status: "abgeschlossen", titel: "Kundendossier auf dem Pult liegen gelassen" }
+];
+
+// Beispielmeldungen mit vorbereiteten Antworten (für den Offline-Modus)
+const PRESETS = [
+  {
+    id: "A", ref: "INC-2026-01187", label: "Bildschirm nicht gesperrt", sub: "Meldung Line Manager · Demo-Szenario Pattern", received: "2026-11-10T09:12",
+    text: "Anruf von Sandra Vogel (Teamleiterin PB Zürich 2): Marco Keller hat am 28.10. über Mittag seinen Arbeitsplatz verlassen, ohne den Bildschirm zu sperren. Sein Outlook war offen. In der Zeit war eine Reinigungskraft von extern im Raum. Sie hat den Bildschirm um 12:40 gesperrt und ihn nach der Pause angesprochen, er hat sich entschuldigt.",
+    capture: {
+      kurztitel: "Bildschirm beim Verlassen des Arbeitsplatzes nicht gesperrt",
+      sachverhalt: "Am 28.10.2026 gegen 12:15 verliess die betroffene Person ihren Arbeitsplatz im Grossraumbüro für die Mittagspause, ohne den Bildschirm zu sperren. Sichtbar war das geöffnete Outlook-Postfach. In dieser Zeit hielt sich eine externe Person eines Dienstleisters im Raum auf. Der Bildschirm wurde um 12:40 gesperrt.",
+      kundschaft: "Nicht bekannt", daten: "E-Mails im Outlook-Postfach (Inhalt nicht bekannt)", systeme: "Arbeitsplatzrechner, Outlook",
+      sofortmassnahmen: "Bildschirm um 12:40 durch die vorgesetzte Person gesperrt; betroffene Person nach der Pause angesprochen",
+      schaden_chf: 0, schaden: "Kein Schaden bekannt (Beinahe-Vorfall)", beweismittel: "Keine genannt",
+      vorfall_datum: "2026-10-28", kenntnis_datum: "2026-10-28", meldeweg: "Line Manager", selbstmeldung: false,
+      person_kandidaten: [
+        { personalnummer: "P-10231", grund: "Name «Marco Keller» steht in der Meldung; die meldende Teamleiterin ist seine Line Managerin.", sicherheit: "hoch" },
+        { personalnummer: "P-10466", grund: "Ähnlicher Name (Marco Kessler), aber andere Abteilung (Operations).", sicherheit: "niedrig" }
+      ],
+      rueckfragen: [{"id": "q1", "frage": "Waren auf dem Bildschirm Kundendaten sichtbar?", "grund": "Entscheidet zwischen Risk Level Low (keine Kundendaten) und Medium (Kundendaten einzelner Personen).", "feld": "kundschaft", "pflicht": true, "optionen": ["Nein, nur interne E-Mails", "Ja, Kundendaten sichtbar", "Unbekannt"], "erwartet": "Nein, nur interne E-Mails", "uebernahme": {"Nein, nur interne E-Mails": "Keine; nur interne E-Mails sichtbar (Angabe Line Manager)"}}, {"id": "q2", "frage": "Konnte die externe Person den Bildschirm von ihrem Standort aus einsehen?", "grund": "Beeinflusst, ob ein Beinahe-Vorfall oder eine Offenlegung vorliegt.", "feld": "sachverhalt", "pflicht": false, "optionen": ["Ja", "Nein", "Unbekannt"]}, {"id": "q3", "frage": "Weshalb wurde der Vorfall erst 13 Tage später gemeldet?", "grund": "Meldefrist 4 Stunden nach W-01 Ziff. 6.2.", "feld": "sachverhalt", "pflicht": false, "optionen": null}],
+      rueckfrage_entwurf: "Guten Tag\n\nVielen Dank für Ihre Meldung vom 10.11.2026. Für die Erfassung benötigen wir noch zwei Angaben:\n\n1. Konnte die externe Person den Bildschirm von ihrem Standort aus einsehen?\n2. Waren unter den sichtbaren E-Mails solche mit der Klassifikation «Vertraulich» oder höher?\n\nFreundliche Grüsse\nCompliance",
+      identifizierende_details: []
+    },
+    assess: {
+      verstoss: "ja", verstoss_begruendung: "Der Bildschirm wurde beim Verlassen des Arbeitsplatzes nicht gesperrt. Das ist durch die Beobachtung der vorgesetzten Person belegt.",
+      regeln: [{ code: "IS-02", begruendung: "Der Arbeitsplatz wurde für rund 25 Minuten ohne Bildschirmsperre verlassen." }],
+      risk: { level: "Low", begruendung: "Beinahe-Vorfall ohne Schaden; nach Angaben der Meldung waren nur interne E-Mails und keine Kundendaten sichtbar." },
+      behavior: { level: "Expected", umstaende: [
+        { text: "Einmaliges Versäumnis, kein Hinweis auf bewusste Umgehung", richtung: "neutral" },
+        { text: "Hat sich nach dem Gespräch entschuldigt", richtung: "mildernd" }
+      ], begruendung: "Gewöhnlicher Fehler; die Entschuldigung allein reicht nicht für Mitigating, da keine Selbstmeldung und keine aktive Mithilfe vorliegen." },
+      sonderregeln: [],
+      konfidenz: { stufe: "mittel", begruendung: "Der Sachverhalt ist von der vorgesetzten Person beobachtet. Offen ist, ob die externe Person Einsicht hatte; das kann das Risk Level ändern." },
+      offene_fragen: ["Konnte die externe Person den Bildschirm einsehen? Wären Kundendaten sichtbar gewesen, wäre Risk Level Medium zu prüfen."]
+    }
+  },
+  {
+    id: "B", ref: "INC-2026-01142", label: "E-Mail an falschen Empfänger", sub: "Selbstmeldung · 3. Reminder innert 12 Monaten", received: "2026-11-06T16:40",
+    text: "Nina Ammann aus dem Team Firmenkunden KMU Ost meldet sich selbst: Sie hat heute um 16:05 eine Excel-Liste mit Namen, Adressen und Kreditlimiten von drei Firmenkunden an eine falsche externe Adresse geschickt. Die Autovervollständigung hat eine ähnliche Adresse vorgeschlagen. Die Datei war nicht verschlüsselt. Sie hat sofort den Incident Desk angerufen und den Empfänger nicht selbst kontaktiert.",
+    capture: {
+      kurztitel: "Kundendaten per E-Mail an falschen externen Empfänger versandt",
+      sachverhalt: "Am 06.11.2026 um 16:05 versandte die betroffene Person eine unverschlüsselte Excel-Liste mit Firmennamen, Adressen und Kreditlimiten von drei Firmenkunden an einen falschen externen Empfänger. Ursache war eine von der Autovervollständigung vorgeschlagene ähnliche Adresse. Die Person informierte sofort den Incident Desk und kontaktierte den Empfänger nicht selbst.",
+      kundschaft: "Drei Firmenkunden", daten: "Firmennamen, Adressen, Kreditlimiten (Kundendaten, mindestens «Vertraulich»)", systeme: "Outlook",
+      sofortmassnahmen: "Incident Desk sofort telefonisch informiert; Empfänger nicht selbst kontaktiert",
+      schaden_chf: null, schaden: "Nicht bekannt; Risikobeurteilung der Datenschutzberatung ausstehend", beweismittel: "Versandte E-Mail im Postfach der betroffenen Person",
+      vorfall_datum: "2026-11-06", kenntnis_datum: "2026-11-06", meldeweg: "Selbstmeldung", selbstmeldung: true,
+      person_kandidaten: [{ personalnummer: "P-10318", grund: "Selbstmeldung von Nina Ammann, Funktion und Abteilung stimmen überein.", sicherheit: "hoch" }],
+      rueckfragen: [{"id": "q1", "frage": "Liegt die Risikobeurteilung der Datenschutzberatung schon vor?", "grund": "Bei hohem Risiko wäre das Risk Level neu zu prüfen (W-02 Ziff. 7).", "feld": "schaden", "pflicht": true, "optionen": ["Noch nicht", "Ja, kein hohes Risiko", "Ja, hohes Risiko"], "erwartet": "Noch nicht", "uebernahme": {"Noch nicht": "Nicht bekannt; Risikobeurteilung der Datenschutzberatung ausstehend"}}, {"id": "q2", "frage": "An welche Organisation ging die E-Mail?", "grund": "Hilft der Datenschutzberatung bei der Risikobeurteilung.", "feld": "sachverhalt", "pflicht": false, "optionen": null}],
+      rueckfrage_entwurf: "Guten Tag Frau Ammann\n\nVielen Dank für Ihre rasche Meldung. Bitte teilen Sie uns noch mit, an welche Organisation die E-Mail ging, sofern Ihnen das bekannt ist. Den Kontakt mit dem Empfänger koordiniert der Incident Desk mit der Datenschutzberatung; bitte nehmen Sie weiterhin keinen eigenen Kontakt auf.\n\nFreundliche Grüsse\nCompliance",
+      identifizierende_details: []
+    },
+    assess: {
+      verstoss: "ja", verstoss_begruendung: "Kundendaten wurden an einen unberechtigten externen Empfänger offengelegt; die Datei war zudem nicht verschlüsselt.",
+      regeln: [
+        { code: "DS-01", begruendung: "Versand von Kundendaten an einen falschen externen Empfänger." },
+        { code: "IS-06", begruendung: "Die Liste mit Kreditlimiten (mindestens «Vertraulich») wurde unverschlüsselt extern versandt." }
+      ],
+      risk: { level: "Medium", begruendung: "Kundendaten einzelner Personen betroffen (drei Firmenkunden). Kein Hinweis auf Aussenwirkung in grösserem Umfang." },
+      behavior: { level: "Mitigating", umstaende: [
+        { text: "Selbstmeldung am selben Tag", richtung: "mildernd" },
+        { text: "Incident Desk sofort informiert, Empfänger nicht eigenmächtig kontaktiert", richtung: "mildernd" },
+        { text: "Unverschlüsselter Versand vertraulicher Daten", richtung: "belastend" }
+      ], begruendung: "Die entlastenden Umstände überwiegen: sofortige Selbstmeldung und korrektes Verhalten danach." },
+      sonderregeln: [],
+      konfidenz: { stufe: "hoch", begruendung: "Mehrere konkrete, übereinstimmende Angaben aus der Selbstmeldung." },
+      offene_fragen: ["Ergebnis der Risikobeurteilung der Datenschutzberatung; bei hohem Risiko wäre das Risk Level neu zu prüfen."]
+    }
+  },
+  {
+    id: "C", ref: "INC-2026-01121", label: "Formel-1-Einladung eines Lieferanten", sub: "Hinweis Mitarbeitende · Sonderregel", received: "2026-11-04T10:05",
+    text: "Eine Mitarbeiterin aus dem Einkauf hat mir erzählt, dass Stefan Meier vom 31.10. bis 2.11. am Formel-1-Rennen in Austin war, eingeladen von der Datacore AG. Flug und Hotel hat Datacore bezahlt. Datacore ist in der laufenden Ausschreibung für die neue Storage-Infrastruktur, und Stefan leitet das Bewertungsteam. Er hat es ihr am Montag in der Kaffeeküche erzählt, als nur die beiden dort waren. Sie möchte anonym bleiben.",
+    capture: {
+      kurztitel: "Einladung eines Anbieters zu Formel-1-Rennen während laufender Ausschreibung",
+      sachverhalt: "Die betroffene Person nahm vom 31.10. bis 02.11.2026 an einem Formel-1-Rennen in Austin (USA) teil. Flug und Hotel wurden nach ihren eigenen Angaben von der Datacore AG bezahlt. Die Datacore AG ist Anbieterin in der laufenden Ausschreibung zur Erneuerung der Storage-Infrastruktur; die betroffene Person leitet das Bewertungsteam. Eine Bewilligung ist der meldenden Person nicht bekannt.",
+      kundschaft: "Keine", daten: "Keine", systeme: "Keine; betroffen ist das Ausschreibungsverfahren Storage-Infrastruktur",
+      sofortmassnahmen: "Keine bekannt",
+      schaden_chf: null, schaden: "Nicht bezifferbar; Wert der Einladung unbekannt", beweismittel: "Keine genannt; Spesen- und Bewilligungsregister prüfen",
+      vorfall_datum: "2026-10-31", kenntnis_datum: "2026-11-03", meldeweg: "Mitarbeitende (Hinweis)", selbstmeldung: false,
+      person_kandidaten: [{ personalnummer: "P-10577", grund: "Name «Stefan Meier» und Funktion im IT-Einkauf stimmen überein.", sicherheit: "hoch" }],
+      rueckfragen: [{"id": "q1", "frage": "Liegt eine Bewilligung für die Reise vor (W-05 Ziff. 5.3)?", "grund": "Reisen und Übernachtungen sind immer bewilligungspflichtig; eine Bewilligung würde die Bewertung stark ändern.", "feld": "sachverhalt", "pflicht": true, "optionen": ["Nicht bekannt", "Ja", "Nein"], "erwartet": "Nicht bekannt"}, {"id": "q2", "frage": "Wie hoch ist der geschätzte Wert der Einladung?", "grund": "Relevant für Wertgrenzen und Risk Level.", "feld": "schaden", "pflicht": false, "optionen": null}],
+      rueckfrage_entwurf: "Guten Tag\n\nVielen Dank für Ihren Hinweis. Ihre Identität wird vertraulich behandelt. Falls Ihnen bekannt: Wurde die Einladung im Team oder gegenüber der Leitung Einkauf offengelegt? Weitere Abklärungen übernimmt Compliance; bitte stellen Sie selbst keine Nachforschungen an.\n\nFreundliche Grüsse\nCompliance",
+      identifizierende_details: [{ text: "Er hat es ihr am Montag in der Kaffeeküche erzählt, als nur die beiden dort waren.", neutral: "Die betroffene Person hat im Arbeitsumfeld selbst von der Reise erzählt." }]
+    },
+    assess: {
+      verstoss: "ja", verstoss_begruendung: "Nach den Angaben wurde ein erheblicher Vorteil eines Anbieters während einer laufenden Ausschreibung angenommen. Die Angaben stammen aus zweiter Hand und sind zu verifizieren.",
+      regeln: [
+        { code: "GE-03", begruendung: "Annahme einer Einladung der Datacore AG während der laufenden Ausschreibung, in der die Person das Bewertungsteam leitet." },
+        { code: "GE-01", begruendung: "Reisen und Übernachtungen sind nach W-05 Ziff. 5.2 immer bewilligungspflichtig; eine Bewilligung ist nicht bekannt." }
+      ],
+      risk: { level: "High", begruendung: "Verdacht auf Bestechung im Zusammenhang mit einem konkreten Vergabeentscheid; erhebliches Reputationsrisiko." },
+      behavior: { level: "Aggravating", umstaende: [
+        { text: "Leitung des Bewertungsteams: Vertrauensstellung im Vergabeverfahren", richtung: "belastend" },
+        { text: "Keine Bewilligung bekannt", richtung: "belastend" },
+        { text: "Hat selbst offen von der Reise erzählt (kein Hinweis auf Vertuschung)", richtung: "mildernd" }
+      ], begruendung: "Belastende Umstände überwiegen. Für Severely Aggravating fehlen Hinweise auf Absicht oder Vertuschung; Vorsatz wird nicht aus dem Sachverhalt abgeleitet (Leitplanken Ziff. 4)." },
+      sonderregeln: [{ typ: "straftat", begruendung: "Verdacht auf Bestechung (sich bestechen lassen im privaten Sektor, vgl. W-05 Ziff. 3 und Anhang A, vergleichbarer Fall). Die strafrechtliche Beurteilung bleibt Rechtsdienst und CRO vorbehalten." }],
+      konfidenz: { stufe: "mittel", begruendung: "Konkrete Angaben passen zu W-05 Ziff. 5.1 Nr. 4, stammen aber aus zweiter Hand; eine Bewilligung ist nicht ausgeschlossen." },
+      offene_fragen: ["Liegt eine Bewilligung durch GL-Mitglied und Compliance vor?", "Wert der Einladung", "Wer entscheidet über den Zuschlag?"]
+    }
+  }
+  ,{"id": "D", "ref": "INC-2026-01203", "label": "Weinflasche von Kunde", "sub": "Hinweis · kein Verstoss", "received": "2026-11-09T14:30", "text": "Eine Kollegin aus dem Team Bern hat gemeldet, dass Simon Kuhn letzte Woche von einem langjährigen Kunden eine Flasche Wein bekommen hat, geschätzt etwa CHF 60. Sie war unsicher, ob er das hätte melden müssen. Laut Simon läuft mit dem Kunden gerade kein Kreditentscheid oder Ähnliches.", "capture": {"kurztitel": "Geschenk eines Kunden (Flasche Wein, ca. CHF 60)", "sachverhalt": "Die betroffene Person erhielt in der Woche vom 02.11.2026 von einem langjährigen Kunden eine Flasche Wein im geschätzten Wert von rund CHF 60. Nach ihren Angaben ist mit dem Kunden kein Geschäftsentscheid hängig. Die meldende Person war unsicher, ob das Geschenk meldepflichtig ist.", "kundschaft": "Ein Kunde (Schenkender); keine Kundendaten betroffen", "daten": "Keine", "systeme": "Keine", "sofortmassnahmen": "Keine", "schaden_chf": 0, "schaden": "Kein Schaden", "beweismittel": "Keine genannt", "vorfall_datum": "2026-11-04", "kenntnis_datum": "2026-11-06", "meldeweg": "Mitarbeitende (Hinweis)", "selbstmeldung": false, "person_kandidaten": [{"personalnummer": "P-10655", "grund": "Name «Simon Kuhn» und Team Bern stimmen überein.", "sicherheit": "hoch"}], "rueckfragen": [{"id": "q1", "frage": "Hat derselbe Kunde Simon Kuhn dieses Jahr schon andere Geschenke gemacht?", "grund": "Ohne Bewilligung zulässig sind Geschenke bis CHF 200, solange die Summe pro Kunde und Jahr CHF 500 nicht übersteigt (W-05 Ziff. 5.2).", "feld": "sachverhalt", "pflicht": true, "optionen": ["Nein, nur dieses", "Ja, weitere", "Unbekannt"], "erwartet": "Nein, nur dieses", "uebernahme": {"Nein, nur dieses": "Nach Angaben der betroffenen Person das einzige Geschenk dieses Kunden im laufenden Jahr"}}], "identifizierende_details": []}, "assess": {"verstoss": "nein", "verstoss_begruendung": "Ein Geschenk im Wert von rund CHF 60 ist nach W-05 Ziff. 5.2 ohne Bewilligung zulässig (Einzelgeschenk bis CHF 200, Summe pro Geschäftspartner und Jahr höchstens CHF 500). Ein Geschäftsentscheid mit dem Kunden ist nicht hängig (W-05 Ziff. 5.1 Nr. 4). W-05 Anhang A nennt eine Flasche Wein für rund CHF 60 ausdrücklich als zulässig.", "regeln": [{"code": "GE-01", "begruendung": "Geprüft: Wertgrenzen für Geschenke"}], "risk": null, "behavior": null, "sonderregeln": [], "konfidenz": {"stufe": "hoch", "begruendung": "Wert und Umstände sind konkret genannt und passen eindeutig zu W-05 Ziff. 5.2."}, "offene_fragen": []}}
+  ,{"id": "E", "ref": "", "label": "Kundendaten in ChatGPT", "sub": "Meldung aus dem Weisungs-Assistenten", "received": "", "text": "Ein Kollege aus der Kreditabteilung, Jonas Weber, hat mir heute erzählt, dass er die Bilanz und die Kreditlimite einer Firmenkundin in ChatGPT kopiert hat, damit es ihm die Zusammenfassung für den Kreditantrag schreibt. Ist das erlaubt? Was soll ich tun?", "capture": {"kurztitel": "Kundendaten einer Firmenkundin in öffentlichem KI-Chatbot verarbeitet", "sachverhalt": "Nach einem Hinweis aus dem Weisungs-Assistenten kopierte die betroffene Person Bilanzzahlen und die Kreditlimite einer Firmenkundin in den öffentlichen KI-Dienst ChatGPT, um eine Zusammenfassung für einen Kreditantrag erstellen zu lassen. Die betroffene Person hat dies im Arbeitsumfeld selbst erzählt.", "kundschaft": "Eine Firmenkundin", "daten": "Bilanzzahlen und Kreditlimite (Kundendaten, mindestens «Vertraulich»)", "systeme": "ChatGPT (nicht freigegebener KI-Dienst)", "sofortmassnahmen": "Keine bekannt", "schaden_chf": null, "schaden": "Nicht bekannt; möglicher Datenabfluss an einen externen Anbieter", "beweismittel": "Keine genannt", "vorfall_datum": "heute", "kenntnis_datum": "heute", "meldeweg": "Mitarbeitende (Hinweis)", "selbstmeldung": false, "person_kandidaten": [{"personalnummer": "P-10512", "grund": "Name «Jonas Weber» und Kreditabteilung stimmen überein.", "sicherheit": "hoch"}], "rueckfragen": [{"id": "q1", "frage": "Wurde der Name der Firmenkundin mit eingegeben?", "grund": "Entscheidet, ob identifizierbare Kundendaten (CID) offengelegt wurden; bei möglichem Datenabfluss ist zusätzlich die IT-Security-Hotline 5555 beizuziehen (W-02 Ziff. 6).", "feld": "sachverhalt", "pflicht": true, "optionen": ["Ja, mit Firmennamen", "Nein, anonymisiert", "Unbekannt"], "erwartet": "Ja, mit Firmennamen", "uebernahme": {"Ja, mit Firmennamen": "Der Firmenname der Kundin wurde mit eingegeben (identifizierbare Kundendaten)"}}, {"id": "q2", "frage": "Wurde die betroffene Person zur Regel für KI-Tools geschult?", "grund": "Fehlende Schulung wäre ein mildernder Umstand.", "feld": "sachverhalt", "pflicht": false, "optionen": ["Ja, geschult", "Nein, nicht geschult", "Unbekannt"]}], "identifizierende_details": []}, "assess": {"verstoss": "ja", "verstoss_begruendung": "Kundendaten wurden in einen nicht freigegebenen öffentlichen KI-Dienst eingegeben.", "regeln": [{"code": "DS-03", "begruendung": "Kundendaten (CID) in einem nicht freigegebenen öffentlichen KI-Dienst verarbeitet."}, {"code": "IS-03", "begruendung": "Geschäftsinformationen in einem nicht freigegebenen KI-Dienst gespeichert."}], "risk": {"level": "Medium", "begruendung": "Kundendaten einer einzelnen Firmenkundin wurden an einen externen Anbieter offengelegt; ein Datenabfluss ist nicht auszuschliessen."}, "behavior": {"level": "Expected", "umstaende": [{"text": "Wollte eine Arbeitsaufgabe schneller erledigen, kein Hinweis auf Eigennutz", "richtung": "neutral"}, {"text": "Hat offen davon erzählt, kein Hinweis auf Vertuschung", "richtung": "mildernd"}, {"text": "Vertrauliche Kundendaten bewusst in einen externen Dienst kopiert", "richtung": "belastend"}], "begruendung": "Weder entlastende noch belastende Umstände überwiegen; der Schulungsstand ist offen."}, "sonderregeln": [], "konfidenz": {"stufe": "mittel", "begruendung": "Angaben aus zweiter Hand; Umfang der eingegebenen Daten unbestätigt."}, "offene_fragen": ["Umfang der eingegebenen Daten", "Schulungsstand der betroffenen Person zu W-02 Ziff. 5 Nr. 5"]}}
+];
+
+// Policy Owner je Weisung (aus dem Kopf der Weisungen W-01 bis W-11; E-Mail-Adressen fiktiv)
+const POLICY_OWNERS = {
+  "W-01": { titel: "Rahmenweisung Vorfallmeldung und Eskalation", verantwortlich: "Chief Risk Officer (CRO)", team: "Incident Desk (Operational Risk Management)", mail: "incident-desk@musterbank.example" },
+  "W-02": { titel: "Datenschutz", verantwortlich: "Datenschutzberaterin / Datenschutzberater (DSB)", team: "Datenschutzberatung", mail: "datenschutz@musterbank.example" },
+  "W-03": { titel: "Informations- und Cybersicherheit", verantwortlich: "Chief Information Security Officer (CISO)", team: "Office of the CISO", mail: "ciso-office@musterbank.example" },
+  "W-04": { titel: "Verhaltenskodex und Interessenkonflikte", verantwortlich: "Leiterin / Leiter Compliance", team: "Compliance", mail: "compliance@musterbank.example" },
+  "W-05": { titel: "Geschenke und Einladungen", verantwortlich: "Leiterin / Leiter Compliance", team: "Compliance", mail: "compliance@musterbank.example" },
+  "W-06": { titel: "Marktverhaltensregeln", verantwortlich: "Leiterin / Leiter Compliance", team: "Compliance, Fachgruppe Marktaufsicht", mail: "marktaufsicht@musterbank.example" },
+  "W-07": { titel: "Meldung von Missständen (Whistleblowing)", verantwortlich: "Leiterin / Leiter Compliance", team: "Meldestelle für Missstände", mail: "meldestelle@musterbank.example" },
+  "W-08": { titel: "Mitarbeiterverhalten", verantwortlich: "Leiterin / Leiter Human Resources (HR)", team: "HR", mail: "hr-employee-relations@musterbank.example" },
+  "W-09": { titel: "Arbeitssicherheit", verantwortlich: "Leiterin / Leiter Human Resources (HR)", team: "Fachstelle Arbeitssicherheit und Gesundheitsschutz", mail: "arbeitssicherheit@musterbank.example" },
+  "W-10": { titel: "Betrugs- und Geldwäscheprävention", verantwortlich: "Leiterin / Leiter Compliance", team: "GwG-Fachstelle und Fraud Management", mail: "fraud-gwg@musterbank.example" },
+  "W-11": { titel: "Untersuchungs- und Sanktionsverfahren", verantwortlich: "Leitung HR und Leitung Compliance (gemeinsam)", team: "HR und Compliance", mail: "hr-compliance@musterbank.example" }
+};
+
+// ===== Wissensbasis: verdichtete Auszüge aus W-01 bis W-11 und E-00 bis E-04 (Musterbank AG, fiktiv) =====
+const DOCS = {
+  "W-01": "Rahmenweisung Vorfallmeldung und Eskalation", "W-02": "Datenschutz", "W-03": "Informations- und Cybersicherheit",
+  "W-04": "Verhaltenskodex und Interessenkonflikte", "W-05": "Geschenke und Einladungen", "W-06": "Marktverhaltensregeln",
+  "W-07": "Meldung von Missständen (Whistleblowing)", "W-08": "Mitarbeiterverhalten", "W-09": "Arbeitssicherheit",
+  "W-10": "Betrugs- und Geldwäscheprävention", "W-11": "Untersuchungs- und Sanktionsverfahren",
+  "E-00": "Dolose Handlungen und Verstossabgrenzung", "E-01": "Berechtigungs- und Privilegienmanagement",
+  "E-02": "Handels- und Kommunikationsüberwachung", "E-03": "Kontrollumgehungen und Übersteuerungen", "E-04": "Kundendaten und Bankkundengeheimnis"
+};
+const KB = [
+  // W-01
+  ["W-01", "Ziff. 2", "Geltungsbereich", "Gilt für alle Mitarbeitenden inkl. GL, Lernende, Praktikanten, Temporäre und externe Personen mit Zugang zu Räumen, Systemen oder Informationen der Bank; an allen Standorten, im Homeoffice und unterwegs."],
+  ["W-01", "Ziff. 4", "Begriffe Vorfall, Beinahe-Vorfall, Kenntnisnahme", "Vorfall: jedes Ereignis, das tatsächlich oder möglicherweise zu Schaden, Regelverstoss, Gefährdung oder Reputationsrisiko führt; auch Beinahe-Vorfälle (Near Misses). Kenntnisnahme: Zeitpunkt, in dem jemand den Vorfall bemerkt oder hätte bemerken müssen; ab dann laufen die Fristen. Incident Desk: IncidentNet, incident@musterbank.example, intern 4444."],
+  ["W-01", "Ziff. 5", "Grundsätze: Meldepflicht, keine eigenen Ermittlungen", "Alle Mitarbeitenden müssen Vorfälle und begründete Verdachtsfälle melden; im Zweifel melden. Gutgläubige Meldungen haben keine Nachteile. Personen, die selbst Belästigung oder Mobbing erfahren, trifft keine Meldepflicht. Rasch statt vollständig melden. Keine eigenen Ermittlungen, keine Konfrontation, keine Beweismittel verändern. Need-to-know. Vergeltung verboten. Eigene Fehler zu melden wird zugunsten der Person berücksichtigt (Ziff. 5.6)."],
+  ["W-01", "Ziff. 6.2", "Meldekanäle und Fristen", "Gefahr für Leib und Leben: Notruf 144/117/118, dann Sicherheitsdienst 4411, sofort. Laufender Cyberangriff oder kompromittiertes Gerät/Konto: IT-Security-Hotline 5555, sofort, spätestens 30 Minuten. Laufender Betrug: Fraud Management 6666, sofort. Alle übrigen Vorfälle: IncidentNet oder 4444, unverzüglich, spätestens innert 4 Stunden (ausserhalb der Arbeitszeit am nächsten Arbeitstag bis 10:00). Geldwäschereiverdacht: direkt an GwG-Fachstelle, nicht IncidentNet, am gleichen Arbeitstag. Vertraulich/anonym: Meldestelle W-07. Belästigung: Anlaufstelle nach W-08. Zusätzlich die vorgesetzte Person informieren, ausser sie ist beteiligt oder es geht um W-07, W-08 oder Geldwäscherei."],
+  ["W-01", "Ziff. 6.3", "Inhalt der Meldung", "Soweit bekannt: Name und Einheit der meldenden Person (ausser anonym), Datum und Uhrzeit von Vorfall und Kenntnisnahme, Beschreibung (was, wo, wer), betroffene Kundschaft, Mitarbeitende, Systeme, Daten, Sofortmassnahmen, geschätzter Schaden, Hinweise auf Beweismittel."],
+  ["W-01", "Ziff. 7", "Schweregrade S1 bis S4", "S1 kritisch: Gefahr für Leib und Leben, Schaden ab CHF 1 Mio., erfolgreicher Cyberangriff auf kritische Systeme, FINMA-Meldung wahrscheinlich, GL/VR verwickelt, erhebliches Medienrisiko; Klassifizierung innert 1 Stunde, Eskalation CEO und CRO sofort. S2 hoch: Schaden CHF 100'000 bis unter 1 Mio., kompromittiertes Konto, Verdacht auf internen Betrug, Insiderdelikt oder Bestechung, begründeter GwG-Verdacht, wiederholte Belästigung; innert 4 Stunden. S3 mittel: Schaden CHF 10'000 bis unter 100'000, Regelverstoss ohne Aussenwirkung; innert 1 Arbeitstag. S4 gering: Schaden unter CHF 10'000, Beinahe-Vorfall, geringfügiger Verstoss. Massgebend ist das höchste zutreffende Kriterium."],
+  ["W-01", "Ziff. 9", "Bearbeitungsprozess und Zielwerte", "Meldung, Erfassung mit Eingangsbestätigung (Referenz INC-JJJJ-NNNNN innert 1 Arbeitstag), Klassifizierung, Zuweisung an Fachstelle, Sofortmassnahmen, Abklärung, externe Meldungen, Massnahmen, Abschluss. Zielwerte Abschluss: S1 30, S2 60, S3/S4 90 Kalendertage; Untersuchungen gegen Personen 60 Kalendertage."],
+  ["W-01", "Ziff. 10", "Dokumentation, Pseudonymisierung, Aufbewahrung", "Alle Vorfälle in IncidentNet. Fälle aus Fachsystemen (PA-Dealing, Meldestelle W-07, HR W-08, HR-Portal W-09, GwG-Fachstelle) nur pseudonymisiert mit Referenz, Kategorie, Schweregrad. Sonst wird die verdächtigte Person nicht mit Namen, sondern als «betroffene Person» bezeichnet. Aufbewahrung 10 Jahre ab Abschluss."],
+  ["W-01", "Ziff. 11", "Verstösse gegen die Meldepflicht", "Wer vorsätzlich oder grob fahrlässig nicht, verspätet oder falsch meldet, eine Meldung unterdrückt, Beweise vernichtet oder Vergeltung übt, verletzt Art. 321a OR. Verfahren nach W-11."],
+  // W-02
+  ["W-02", "Ziff. 5", "Grundsätze Datenschutz, Need-to-know, Neugierabfragen", "Zweckbindung und Datenminimierung. Nr. 3: Zugriff nur auf Kunden- und Mitarbeitendendaten, die für die konkrete Aufgabe nötig sind; Zugriffe werden protokolliert; Neugierabfragen (Prominente, Nachbarn, Familie, Kollegen) sind verboten. Nr. 4: Kundendaten nicht an private E-Mail, private Geräte oder nicht freigegebene Cloud-Dienste. Nr. 6: neue Bearbeitungen der DSB melden. Nr. 7: Bekanntgabe ins Ausland nur nach Prüfung durch DSB."],
+  ["W-02", "Ziff. 5 Nr. 5", "KI-Tools und Chatbots", "Personen- und Kundendaten nur in KI-Tools, die von CISO und DSB freigegeben sind. Öffentliche KI-Chatbots ohne Vereinbarung dürfen nicht für Personendaten, Kundendaten (CID) oder «Vertraulich»/«Streng vertraulich» klassifizierte Informationen genutzt werden. Ein Verstoss ist als Vorfall zu melden."],
+  ["W-02", "Ziff. 6", "Datenschutzvorfälle melden", "Zu melden: E-Mail oder Dokument mit Personendaten an falschen Empfänger, Verlust von Akten oder Geräten mit Personendaten, unberechtigter Zugriff, versehentliche Löschung, Offenlegung durch Fehlkonfiguration. Kanal: IncidentNet, Kategorie «Datenschutz», spätestens innert 4 Stunden; bei Cyberbezug zuerst 5555. Bei Fehlversand den Empfänger erst nach Rücksprache mit DSB oder Incident Desk kontaktieren. Auskunftsbegehren innert 1 Arbeitstag an datenschutz@musterbank.example."],
+  ["W-02", "Ziff. 7", "Risikobeurteilung durch die DSB", "Die Datenschutzberatung beurteilt jede Verletzung möglichst innert 24 Stunden (Art der Daten, Anzahl Betroffene, Missbrauchswahrscheinlichkeit). Bei voraussichtlich hohem Risiko Meldung an den EDÖB so rasch als möglich (Entscheid DSB). Offenlegung von Kundendaten an Unbefugte mindestens S2."],
+  // W-03
+  ["W-03", "Ziff. 5.1", "Zugang, Passwörter, Bildschirmsperre", "Zugangsdaten, Passwörter, PIN und Einmalcodes sind persönlich und werden nie weitergegeben, auch nicht an Vorgesetzte oder angeblichen IT-Support; die IT fragt nie nach Passwörtern. Passwörter mindestens 14 Zeichen, MFA für Fernzugriff. Bildschirm beim Verlassen des Arbeitsplatzes sperren (Windows-Taste + L)."],
+  ["W-03", "Ziff. 5.2", "Umgang mit Informationen, Clean Desk, private Kanäle", "Klassifikation beachten; «Vertraulich» und «Streng vertraulich» nur verschlüsselt extern übermitteln. Clean Desk: vertrauliche Unterlagen einschliessen, Ausdrucke sofort abholen. Keine Weiterleitung an private E-Mail, keine privaten Speichermedien, keine nicht freigegebenen Cloud- oder KI-Dienste. USB-Datenträger gesperrt, Ausnahmen bewilligt der CISO."],
+  ["W-03", "Ziff. 5.3", "Geräte und Software", "Nur Software aus dem Software-Katalog. Sicherheitsupdates nicht unterdrücken. Mobile Geräte auf Reisen nie unbeaufsichtigt; Reisegeräte in Risikoländer. In öffentlichen Räumen nur mit Blickschutzfilter und VPN."],
+  ["W-03", "Ziff. 5.4", "Phishing und Social Engineering", "Verdächtige E-Mails über «Phishing melden» in Outlook melden, nicht öffnen oder weiterleiten. Telefonische Anfragen nach Informationen oder Zahlungsfreigaben über bekannte Nummer zurückrufen. CEO-Fraud-Aufforderungen nie ohne Rückfrage ausführen."],
+  ["W-03", "Ziff. 6.2", "Phishing-Klick, Geräteverlust: Sofortmassnahmen und Fristen", "Link geklickt oder Zugangsdaten eingegeben: Gerät nicht ausschalten, vom Netz trennen, IT-Security-Hotline 5555 sofort, spätestens 30 Minuten, danach IncidentNet. Lösegeldforderung: nichts bezahlen, nichts löschen, 5555. Geräteverlust: Fernsperre über 5555, spätestens 1 Stunde. Übrige Sicherheitsvorfälle: IncidentNet innert 4 Stunden. Ein sofort gemeldeter einzelner Phishing-Klick führt in der Regel zu keinen arbeitsrechtlichen Massnahmen; verzögerte oder unterlassene Meldungen gelten als Pflichtverletzung."],
+  ["W-03", "Ziff. 7", "Schweregrade Cyber", "S1 Ransomware auf Servern, erfolgreicher Angriff auf Zahlungsverkehr. S2 kompromittiertes Konto, Malware, Verlust eines Geräts mit unverschlüsselten Daten. S3 Phishing-Klick, sobald das SOC eine Kompromittierung ausgeschlossen hat (bis dahin S2). S4 gemeldete Phishing-Mail ohne Interaktion, Verlust eines verschlüsselten, gesperrten Geräts."],
+  ["W-03", "Ziff. 11", "Schwere Verstösse Informationssicherheit", "Als schwer gelten Weitergabe von Zugangsdaten, bewusstes Umgehen von Sicherheitsmassnahmen, Installieren nicht bewilligter Software und Verschweigen eines Vorfalls. Wiederholtes Nichtbestehen von Phishing-Simulationen führt zu Nachschulungen."],
+  // W-04
+  ["W-04", "Ziff. 5", "Interessenkonflikte offenlegen", "Interessenkonflikte, Nebenbeschäftigungen und Mandate werden offengelegt; Compliance entscheidet innert 10 Arbeitstagen über Massnahmen (Ausstand, Neuzuteilung, Vier-Augen-Prinzip, Ablehnung). Kunden, die nahestehende Personen sind (Ziff. 5.1), dürfen nicht selbst betreut werden (Ziff. 5.2). Jährliche Compliance-Bestätigung."],
+  ["W-04", "Ziff. 6", "Interessenkonflikte melden", "Eigener, nicht offengelegter Konflikt: Formular «Offenlegung Interessenkonflikt» innert 10 Arbeitstagen, vor einem betroffenen Entscheid sofort. Beobachteter Verstoss: IncidentNet, Kategorie «Compliance», innert 4 Stunden. Beteiligung der vorgesetzten Person: Meldestelle W-07."],
+  ["W-04", "Ziff. 7", "Schweregrade Interessenkonflikte", "S1 Verstoss eines GL- oder VR-Mitglieds. S2 nicht bewilligtes VR-Mandat bei einem Kunden, Kreditvergabe an nahestehende Person ohne Ausstand, nicht gemeldete Erbeinsetzung durch Kundin. S3 verspätete Offenlegung einer Nebenbeschäftigung ohne Konflikt. S4 formelle Mängel. Nebenbeschäftigung (z.B. Kassier im Verein) braucht Bewilligung von vorgesetzter Person und Compliance."],
+  // W-05
+  ["W-05", "Ziff. 5.1", "Grundsätze Geschenke und Einladungen", "Vorteile nie zur Beeinflussung eines Geschäftsentscheids annehmen oder gewähren; nie Vorteile fordern. Nr. 3: Bargeld und bargeldähnliche Mittel (Gutscheine, Geschenkkarten, Krypto) weder annehmen noch gewähren, unabhängig vom Betrag. Nr. 4: keine Vorteile während laufender Ausschreibungen, Vertragsverhandlungen oder Kreditentscheide mit dem betreffenden Partner. Nr. 5: Amtsträgern keine Vorteile ausser einfacher Bewirtung; Einladungen von Amtsträgern vorgängig durch Compliance bewilligen."],
+  ["W-05", "Ziff. 5.2", "Wertgrenzen Geschenke, Essen, Einladungen, Reisen", "Geschenke: bis CHF 200 ohne Bewilligung, sofern pro Partner und Jahr höchstens CHF 500; über CHF 200 bis 1'000 oder über Jahressumme: Bewilligung; über CHF 1'000 verboten. Geschäftsessen bis CHF 300 pro Person ohne Bewilligung. Veranstaltungen (Sport, Kultur) bis CHF 300 pro Person, wenn der Gastgeber anwesend ist; sonst oder mit Begleitperson Bewilligung. Reisen und Übernachtungen immer bewilligungspflichtig (GL-Mitglied und Compliance), zu Freizeitzwecken verboten."],
+  ["W-05", "Ziff. 5.3", "Bewilligung und Nachmeldung", "Bewilligungspflichtige Vorteile vorgängig über das Formular «Geschenke und Einladungen» in IncidentNet beantragen; Bewilligung durch vorgesetzte Person mit Compliance. Ist das nicht möglich (Geschenk beim Termin überreicht), innert 5 Arbeitstagen nachmelden. Compliance entscheidet über Behalten, Rückgabe oder Spende. Rückgabe höflich mit Musterbrief (Ziff. 5.4)."],
+  ["W-05", "Ziff. 6", "Bestechungsangebote melden", "Angebote zur Beeinflussung, Bargeld oder Forderungen nach Vorteilen: IncidentNet, Kategorie «Compliance», oder Compliance 4700, spätestens innert 4 Stunden. Eigener nicht bewilligter Vorteil: Formular innert 5 Arbeitstagen. Beobachteter Verstoss anderer: IncidentNet oder vertraulich nach W-07."],
+  ["W-05", "Ziff. 7", "Schweregrade Geschenke und Bestechung", "S1 Verdacht auf Bestechung eines Amtsträgers oder unter GL-Beteiligung. S2 Vorteil im Zusammenhang mit einem konkreten Geschäftsentscheid, Annahme von Bargeld. S3 nicht bewilligte Einladung über der Wertgrenze ohne Bezug zu einem Entscheid, sofort zurückgegebenes Bargeld. S4 verspätete Meldung eines Geschenks unter CHF 1'000. Beispiel: Einladung eines Lieferanten zum Formel-1-Wochenende während Ausschreibung = verboten, S2."],
+  // W-06
+  ["W-06", "Ziff. 5.1", "Insiderinformationen", "Insiderinformationen nicht ausnützen, nicht weitergeben, keine Empfehlungen. Weitergabe nur Need-to-know; Wall Crossing nur mit Zustimmung von Compliance. Zufällig erlangte Insiderinformation sofort Compliance (4700) melden und nicht weitergeben."],
+  ["W-06", "Ziff. 5.3", "Mitarbeitergeschäfte: Vorabbewilligung, Haltedauer, Sperrliste", "Depots bei Drittbanken innert 10 Arbeitstagen melden. Kundenaufträge haben Vorrang; Front, Parallel und After Running verboten. Keine Geschäfte in Titeln der Sperrliste. Mitarbeitende in Vertraulichkeitsbereichen holen vor jedem Geschäft in Einzeltiteln eine Vorabbewilligung im Tool «PA-Dealing» ein (gültig bis Ende des folgenden Handelstags). Mindesthaltedauer 30 Kalendertage, Ausnahmen nur mit Compliance. Leerverkäufe, ungedeckte Optionen und Intraday verboten. Ausgenommen: breit diversifizierte Fonds, ETF, Säule 3a."],
+  ["W-06", "Ziff. 5.4", "Kommunikationskanäle", "Mitarbeitende in Vertraulichkeitsbereichen und im Handel kommunizieren geschäftlich ausschliesslich über die freigegebenen Kanäle der Bank (Kontrolle nach E-02)."],
+  ["W-06", "Ziff. 6.2", "Marktverstösse melden", "Verdacht gegen Kundschaft: telefonisch Compliance 4700, danach IncidentNet, innert 4 Stunden, kein Tipping-off. Verdacht gegen Mitarbeitende: IncidentNet «Compliance» oder 4700, vertraulich nach W-07. Eigener Verstoss bei Mitarbeitergeschäften (z.B. vergessene Vorabbewilligung): Tool «PA-Dealing», Funktion «Selbstanzeige», innert 1 Arbeitstag."],
+  // W-07
+  ["W-07", "Ziff. 5", "Wann Whistleblowing", "Für Meldungen mit Wunsch nach Vertraulichkeit oder Anonymität oder wenn der ordentliche Weg nicht möglich ist (z.B. vorgesetzte Person beteiligt). Wer nach W-07 meldet, hat die Meldepflicht nach W-01 erfüllt."],
+  ["W-07", "Ziff. 6", "Meldekanäle Whistleblowing", "Meldestelle Compliance: 4747 oder speakup@musterbank.example (vertraulich, nicht anonym). Externes Portal «SpeakUp» rund um die Uhr, anonym möglich. Betrifft die Meldung die Leitung Compliance oder ein GL-Mitglied: direkt an das Präsidium des Prüfungs- und Risikoausschusses (Brief «Persönlich / Vertraulich» oder Portal mit Auswahl «Verwaltungsrat»). Veröffentlichung in Medien ist nicht gedeckt."],
+  ["W-07", "Ziff. 8", "Bearbeitung von Hinweisen", "Eingangsbestätigung innert 7 Kalendertagen; Triage innert 5 Arbeitstagen; Rückmeldung spätestens 3 Monate nach Eingangsbestätigung. Incident Desk erhält nur Referenz, Kategorie, Schweregrad."],
+  ["W-07", "Ziff. 9", "Schutz hinweisgebender Personen, Vergeltung", "Identität wird ohne Zustimmung niemandem offengelegt. Vergeltung (Kündigung, Versetzung, Ausschluss von Bonus, Mobbing) ist verboten und selbst ein Verstoss nach W-11. Wer sich benachteiligt fühlt, meldet dies der Meldestelle oder dem Präsidium; Prüfung innert 10 Arbeitstagen. Gutgläubige Meldungen haben keine Nachteile; wissentlich falsche werden sanktioniert."],
+  // W-08
+  ["W-08", "Ziff. 4", "Erwartetes Verhalten", "Respekt unabhängig von persönlichen Merkmalen; sachliche Kommunikation; keine Arbeit unter Alkohol oder Drogen; in sozialen Medien nicht im Namen der Bank und keine internen Informationen; Zivilcourage."],
+  ["W-08", "Ziff. 5", "Belästigung, Mobbing, Diskriminierung", "Sexuelle Belästigung: unerwünschtes Verhalten sexueller Natur, das die Würde verletzt; Absicht ist nicht entscheidend. Mobbing: systematisches, feindliches Verhalten über längere Zeit. Diskriminierung: Benachteiligung ohne sachlichen Grund. Gewalt, Drohungen und Vergeltung sind verboten."],
+  ["W-08", "Ziff. 6", "Anlaufstellen und Fristen bei Belästigung", "Belästigte Personen wählen die Anlaufstelle: vorgesetzte Person (wenn nicht beteiligt), HR-Business-Partner, Vertrauenspersonen HR, externe Vertrauensstelle (auch anonym), Meldestelle W-07. Für belästigte Personen keine Frist. Vorgesetzte, die davon erfahren, informieren HR innert 1 Arbeitstag. Bei Gewalt Notruf 117 und 4411."],
+  ["W-08", "Ziff. 7", "Verfahren bei Belästigung", "Informelles Verfahren auf Wunsch (Gespräch, Mediation). Formelles Verfahren: Beschwerde, Schutzmassnahmen innert 2 Arbeitstagen, bei S1/S2 externe Untersuchung, Entscheid durch Sanktionsausschuss innert 60 Tagen. Kündigungsschutz nach Art. 10 GlG während des Verfahrens und 6 Monate danach."],
+  ["W-08", "Ziff. 8", "Schweregrade Mitarbeiterverhalten", "S1 körperliche Gewalt, sexuelle Übergriffe, Vorwürfe gegen GL. S2 wiederholte sexuelle Belästigung, Mobbing über längere Zeit, Diskriminierung bei Lohn oder Beförderung. S3 einmalige anzügliche Bemerkung. S4 Erscheinungsbild oder soziale Medien ohne Schaden."],
+  // W-09
+  ["W-09", "Ziff. 5.2", "Pflichten Arbeitssicherheit", "Sicherheitsvorschriften befolgen, Fluchtwege freihalten, Gefährdungen beseitigen oder melden, an Übungen teilnehmen, nicht unter Alkohol oder beeinträchtigenden Medikamenten arbeiten, Homeoffice ergonomisch einrichten."],
+  ["W-09", "Ziff. 5.3", "Verhalten bei Überfall", "Ruhe bewahren, keine Gegenwehr; Alarm nur ohne Gefährdung; danach Polizei 117, Spuren nicht verändern; sofort Sicherheitsdienst 4411; psychologische Betreuung."],
+  ["W-09", "Ziff. 6.2", "Unfälle melden", "Notfall: 144/118/117, dann 4411. Unfall mit Arbeitsunfähigkeit oder Arztbesuch: vorgesetzte Person informieren und Unfallmeldung im HR-Portal, spätestens innert 2 Arbeitstagen. Bagatellunfall: HR-Portal innert 5 Arbeitstagen. Beinahe-Unfall oder Gefährdung: IncidentNet «Arbeitssicherheit» oder KOPAS innert 1 Arbeitstag."],
+  ["W-09", "Ziff. 7", "Schweregrade Arbeitssicherheit", "S1 Todesfall, schwere Verletzung, Überfall, Brand mit Evakuation. S2 Berufsunfall mit mehr als 3 Tagen Arbeitsunfähigkeit, Bedrohung. S3 Arztbesuch ohne längere Arbeitsunfähigkeit, erhebliche Gefährdung (z.B. verstellter Notausgang). S4 Bagatellunfall, Beinahe-Unfall."],
+  // W-10
+  ["W-10", "Ziff. 5", "Grundsätze Betrug und Geldwäscherei", "Jeder Verdacht wird abgeklärt. Nr. 2 Vier-Augen-Prinzip für Zahlungen, Stammdatenänderungen und Kreditauszahlungen. Nr. 3 Rückrufprinzip über bekannte, unabhängig ermittelte Nummer bei ungewöhnlichen Aufträgen und geänderten Zahlungsverbindungen. Nr. 4 keine Zahlungen unter Druck. Nr. 5 kein Tipping-off (Art. 10a GwG). Nr. 6 Pflichtferien: zwei Wochen ohne Systemzugriff in Handel, Zahlungsverkehr, Kreditadministration."],
+  ["W-10", "Ziff. 6.1", "Warnsignale Betrug und Geldwäscherei", "Geldwäscherei: Transaktionen ohne wirtschaftlichen Hintergrund, hohe Bareinzahlungen, Smurfing, schnelle Weiterleitung, Hochrisikoländer. Externer Betrug: Zeitdruck, geänderte Zahlungsverbindungen per E-Mail, Kunden unter Anleitung Dritter. Interner Betrug: Ferien vermeiden, Zugriffe ohne Auftrag, ungewöhnliche Stornos, Lebensstil im Widerspruch zum Einkommen. Ein Warnsignal ist kein Beweis."],
+  ["W-10", "Ziff. 6.2", "Betrug und Geldwäscherei melden", "Geldwäschereiverdacht: Formular «GwG-Verdachtsmeldung intern» oder 4800, spätestens am gleichen Arbeitstag, nicht IncidentNet; keine verdachtsbezogenen Transaktionen ausführen, ohne Tipping-off. Laufender externer Betrug: 6666 sofort, Zahlung stoppen. Nach erfolgter Zahlung: 6666 innert 1 Stunde. Verdacht auf internen Betrug: IncidentNet «Betrug» innert 4 Stunden, bei Beteiligung der vorgesetzten Person W-07."],
+  ["W-10", "Ziff. 9", "Schweregrade Betrug, Potenzialkennzeichnung", "S1 interner Betrug mit GL-Beteiligung, Schaden ab CHF 1 Mio., Terrorismusfinanzierung. S2 interner Betrug durch Mitarbeitende, externer Betrug ab CHF 100'000, MROS-Meldung. S3 externer Betrug CHF 10'000 bis unter 100'000. S4 darunter. Abgewehrte Versuche ab CHF 100'000 Potenzial: Potenzialkennzeichnung S2, ab 1 Mio. S1 (z.B. CEO-Fraud über CHF 480'000 abgewehrt = S4 mit Potenzial S2)."],
+  // W-11
+  ["W-11", "Ziff. 5", "Grundsätze Untersuchung", "Unschuldsvermutung, rechtliches Gehör, sorgfältige Abklärung belastender und entlastender Umstände, Zügigkeit, Verhältnismässigkeit und Gleichbehandlung unabhängig von Funktion, Trennung von Untersuchung und Entscheid, Vertraulichkeit, Vergeltungsverbot."],
+  ["W-11", "Ziff. 6", "Vorabklärung und Untersuchungsleitung", "Vorabklärung innert 5 Arbeitstagen. Untersuchungsleitung: Compliance bei W-02, W-04, W-05, W-06; Interne Revision mit Rechtsdienst bei internem Betrug (W-10); HR bei W-08 (bei S1/S2 extern); HR mit CISO bei W-03/W-09; Compliance mit HR bei unterdrückten Meldungen und Vergeltung; externe Beauftragte bei GL oder Leitung von Kontrollfunktionen."],
+  ["W-11", "Ziff. 7", "Durchführung: Sofortmassnahmen, Befragung, Bericht", "Sofortmassnahmen (Zugriffsentzug, Freistellung mit Lohn, Kontaktverbot) sind keine Sanktion. Befragung durch zwei Personen; Vertrauensperson freiwillig erlaubt; Mitwirkungspflicht; Protokoll gegenlesen innert 3 Arbeitstagen. Stellungnahme zum Bericht innert 5 Arbeitstagen. Zielwert 60 Kalendertage bis zum Entscheid."],
+  ["W-11", "Ziff. 8", "Massnahmenkatalog", "Ermahnung, Auflagen (z.B. Nachschulung, Vier-Augen-Prinzip), schriftliche Verwarnung (in der Regel 3 Jahre berücksichtigt), Kürzung der variablen Vergütung, funktionelle Massnahmen, ordentliche Kündigung, fristlose Kündigung nur bei wichtigem Grund nach Art. 337 OR."],
+  ["W-11", "Ziff. 9", "Entscheid und Sanktionsmatrix", "Sanktionsausschuss (Leitung HR, Leitung Compliance, GL-Mitglied, Rechtsdienst beratend) entscheidet über Kategorien B bis D; geringfügige Fälle vorgesetzte Person mit HR. Kategorien A geringfügig bis D besonders schwer; erschwerend: Vorsatz, Führungsstellung ausgenützt, hoher Schaden, Verschleierung, frühere Verwarnungen; mildernd: Selbstmeldung, Kooperation, Wiedergutmachung, unklare Regel oder fehlende Schulung, Anweisung der vorgesetzten Person. Die Kategorien werden nur im Verfahren nach W-11 angewendet, nicht bei der Meldung."],
+  ["W-11", "Ziff. 10", "Fristen bei fristloser Kündigung", "Überlegungsfrist in der Regel 2 bis 3 Arbeitstage (BGE 130 III 28). Sofortmassnahmen am gleichen Tag; Stellungnahme innert 1 Arbeitstag; Entscheid spätestens am Arbeitstag nach der Anhörung."],
+  ["W-11", "Ziff. 11", "Rechte nach dem Entscheid", "Persönliche Eröffnung und schriftliche Bestätigung. Gegen Verwarnungen und vergütungsbezogene oder funktionelle Massnahmen interne Überprüfung innert 10 Arbeitstagen bei der Leitung HR, Beurteilung durch CEO innert 20 Arbeitstagen. Kündigungen: gesetzliche Rechtsbehelfe."],
+  // E
+  ["E-00", "Ziff. 2-3", "Vorsatz, Fahrlässigkeit, Versehen abgrenzen", "Dolose Handlung = vorsätzliches Fehlverhalten inkl. Eventualvorsatz. Bewusste Fahrlässigkeit: Folge für möglich gehalten, aber auf Ausbleiben vertraut. Für Vorsatz sprechen: Verschleierung, Eigennutz, Umgehung einer bekannten Kontrolle, Wiederholung trotz Hinweis, gelöschte Spuren. Gegen Vorsatz: Irrtum, unklare Weisung, fehlende Schulung, technischer Fehler, dokumentierter Notfall, sofortige Selbstmeldung. Kein Hinweis allein ist ein Beweis; niemand wird wegen eines Schlüsselworts oder Alarms als vorsätzlich eingestuft."],
+  ["E-00", "Ziff. 4-5", "Schweregrad versus Sanktionskategorie; Meldeweg", "Schweregrad S1–S4 nach W-01 Ziff. 7; Sanktionskategorien A–D sind eine getrennte Achse und nur im Verfahren nach W-11. Es gibt keinen separaten Meldekanal für dolose Handlungen; gemeldet wird über die Kanäle der Fachweisung."],
+  ["E-01", "Ziff. 3", "Berechtigungen", "Zugänge sind persönlich; keine gemeinsamen Admin-Konten. Niemand gibt eigene risikorelevante Berechtigungen frei. Unvereinbare Rollen (Erfassen und Freigeben derselben Zahlung) werden verhindert. Funktionswechsel führt zur Neuprüfung der Rechte; nach Austritt werden Rechte deaktiviert. Technische Alarme sind kein Beweis für Vorsatz."],
+  ["E-02", "Ziff. 3-4", "Handels- und Kommunikationsüberwachung", "Zeitliche Nähe zu kursrelevanten Mitteilungen beweist keine Insiderkenntnis. Erfasst werden nur freigegebene dienstliche Kanäle; Schlüsselwörter sind nicht beweiskräftig. Nutzung privater Messenger kann auf Umgehung hinweisen, berechtigt aber nicht zur Durchsuchung privater Geräte. Keine Analyse von Emotionen oder Persönlichkeit."],
+  ["E-03", "Ziff. 3", "Kontrollumgehungen und Übersteuerungen", "Risikorelevante Übersteuerungen brauchen einen eindeutig zugeordneten Entscheid; Gruppenfreigaben, fremde Identitäten und Selbstfreigaben sind unzulässig. Unabhängige Freigabe vor Ausführung, «dringend» allein genügt nicht. Konto- und Zahlungsverbindungen unabhängig verifizieren. Niemand genehmigt Vorgänge, die ihn oder nahestehende Personen begünstigen. Stornos und Rückdatierungen bleiben sichtbar."],
+  ["E-04", "Ziff. 1-3", "Kundendaten und Bankkundengeheimnis", "Bewusste Neugierabfrage ist in erster Linie ein Verstoss gegen W-02, nicht automatisch Art. 47 BankG. Vorsätzliche Weitergabe an Unbefugte kann strafrechtlich relevant sein. Zugriffe nur für konkreten Arbeitsauftrag; eigene Konten und Konten nahestehender Personen nur über Mitarbeitendenprozesse; Exporte, Screenshots und Ausdrucke nur mit Auftrag."]
+].map(([doc, ziff, titel, text], i) => ({ id: "k" + i, doc, ziff, titel, text }));
+
+const SYN = {
+  geschenk: ["vorteil", "geschenk", "einladung", "wertgrenz"], konzert: ["veranstalt", "einladung", "wertgrenz"], ticket: ["veranstalt", "einladung", "wertgrenz"], lieferant: ["vorteil", "einladung", "geschenk"], spiel: ["veranstalt", "einladung"], reise: ["reis", "ubernacht", "bewillig"], einladung: ["vorteil", "einladung", "veranstalt"], essen: ["geschaftsessen", "einladung"],
+  bestechung: ["bestech", "vorteil", "bargeld"], bargeld: ["bargeld", "gutschein"], phishing: ["phishing", "link", "klick", "hotline"],
+  link: ["phishing", "klick"], passwort: ["passwort", "zugangsdat"], bildschirm: ["bildschirm", "sperr"], aktie: ["mitarbeitergeschaft", "einzeltitel", "vorabbewilligung", "haltedau"],
+  aktien: ["mitarbeitergeschaft", "einzeltitel", "vorabbewilligung", "haltedau"], trading: ["mitarbeitergeschaft"], insider: ["insider"],
+  whistleblowing: ["meldestell", "anonym", "speakup"], anonym: ["anonym", "speakup", "meldestell"], mobbing: ["mobbing", "belastig", "anlaufstell"],
+  belastigung: ["belastig", "anlaufstell"], chatgpt: ["ki", "chatbot"], ki: ["ki", "chatbot"], chatbot: ["ki", "chatbot"], email: ["empfang", "fehlversand", "e-mail"],
+  unfall: ["unfall", "hr-portal"], betrug: ["betrug", "fraud"], geldwasch: ["geldwasch", "gwg", "tipping"], frist: ["frist", "innert"], melden: ["meldekanal", "frist", "meld"],
+  sanktion: ["massnahm", "sanktion", "kundig"], kundigung: ["kundig", "fristlos"], nebenbeschaftigung: ["nebenbeschaft", "interessenkonflikt", "mandat"],
+  usb: ["usb", "speichermedi"], handy: ["gerat", "verlust"], laptop: ["gerat", "verlust"], vier: ["vier-augen"], ruckruf: ["ruckruf"], appeal: ["uberprufung"]
+};
+const STOP = new Set("der die das und oder ein eine einer eines einem einen ich du er sie es wir ihr mit von zu zum zur im in am an auf fur bei ist sind war wird werden kann darf muss was wie wer wann wo welche welcher welches nicht kein keine auch noch nur so dass ob als wenn mir mich mein meine man hat habe haben sein den dem des".split(" "));
+function norm(s) { return s.toLowerCase().replace(/ä/g, "a").replace(/ö/g, "o").replace(/ü/g, "u").replace(/ß/g, "ss"); }
+function toks(s) { return norm(s).split(/[^a-z0-9-]+/).filter(t => t.length > 2 && !STOP.has(t)).map(t => t.length > 6 ? t.replace(/(ungen|ung|en|er|es|e|n|s)$/, "") : t); }
+const KB_IDX = KB.map(k => ({ k, title: toks(k.doc + " " + k.titel), body: toks(k.text) }));
+function retrieve(query, n = 6, exclude) {
+  const q = toks(query); const extra = [];
+  q.forEach(t => Object.keys(SYN).forEach(s => { if (t.startsWith(s.slice(0, 5))) extra.push(...SYN[s]); }));
+  const terms = [...new Set(q.concat(extra))];
+  const docHit = (query.match(/\b[WE]-\d{2}\b/gi) || []).map(x => x.toUpperCase());
+  const scored = KB_IDX.filter(({ k }) => !(exclude || []).includes(k.doc)).map(({ k, title, body }) => {
+    let sc = 0;
+    terms.forEach(t => { const p = t.slice(0, 6); if (title.some(x => x.startsWith(p))) sc += 3; sc += Math.min(3, body.filter(x => x.startsWith(p)).length); });
+    if (docHit.includes(k.doc)) sc += 4;
+    return { k, sc };
+  }).filter(x => x.sc > 0).sort((a, b) => b.sc - a.sc).slice(0, n).map(x => x.k);
+  if (!scored.some(k => k.doc === "W-01" && k.ziff === "Ziff. 6.2") && /meld|frist|wohin|kanal/.test(norm(query))) scored.push(KB.find(k => k.doc === "W-01" && k.ziff === "Ziff. 6.2"));
+  return scored;
+}
+function kbBlock(cards) { return cards.map(c => `[${c.doc} ${c.ziff}] ${DOCS[c.doc]} – ${c.titel}: ${c.text}`).join("\n"); }
+
+if (typeof module !== "undefined") module.exports = { KB, retrieve };
+
+// ===== Geschäftsregeln aus dem Ist-Prozess (deterministisch, ohne KI) =====
+const LEVELS = ["Reminder", "Employee Incident", "HR Referral"];
+const RISKS = ["Low", "Medium", "High"];
+const BEHAVIORS = ["Mitigating", "Expected", "Aggravating", "Severely Aggravating"];
+const MATRIX = {
+  "Mitigating":           { Low: "Reminder",          Medium: "Reminder",          High: "HR Referral" },
+  "Expected":             { Low: "Reminder",          Medium: "Employee Incident", High: "HR Referral" },
+  "Aggravating":          { Low: "Employee Incident", Medium: "Employee Incident", High: "HR Referral" },
+  "Severely Aggravating": { Low: "HR Referral",       Medium: "HR Referral",       High: "HR Referral" }
+};
+const lvlIdx = l => LEVELS.indexOf(l);
+const maxLevel = (...ls) => ls.filter(Boolean).reduce((a, b) => (lvlIdx(b) > lvlIdx(a) ? b : a));
+
+function parseD(s) { if (!s) return null; const [y, m, d] = s.slice(0, 10).split("-").map(Number); return new Date(y, m - 1, d); }
+function isoD(d) { return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0"); }
+function fmtD(s) { const d = typeof s === "string" ? parseD(s) : s; if (!d || isNaN(d)) return "–"; return String(d.getDate()).padStart(2, "0") + "." + String(d.getMonth() + 1).padStart(2, "0") + "." + d.getFullYear(); }
+function addDays(d, n) { const x = new Date(d); x.setDate(x.getDate() + n); return x; }
+function addBD(d, n) { const x = new Date(d); let k = 0; while (k < n) { x.setDate(x.getDate() + 1); const w = x.getDay(); if (w !== 0 && w !== 6) k++; } return x; }
+function minus12M(d) { const x = new Date(d); x.setFullYear(x.getFullYear() - 1); return x; }
+
+// Pattern Aggregation nach Ist-Prozess
+function patternCheck(history, personId, code, incidentDateStr, baseLevel) {
+  const codes = (Array.isArray(code) ? code : [code]).filter(Boolean);
+  const inc = parseD(incidentDateStr);
+  const from = minus12M(inc);
+  const considered = history.filter(h => h.person === personId).map(h => {
+    const d = parseD(h.informed);
+    let counts = true, why = "im 12-Monats-Fenster, abgeschlossen";
+    if (h.status !== "abgeschlossen") { counts = false; why = h.status + ": zählt nicht"; }
+    else if (h.linkedTo) { counts = false; why = "bereits " + h.linkedTo + " zugeordnet"; }
+    else if (d < from || d > inc) { counts = false; why = "ausserhalb des 12-Monats-Fensters"; }
+    return { ...h, counts, why };
+  }).sort((a, b) => a.informed.localeCompare(b.informed));
+  let level = baseLevel; const triggers = []; const rules = [];
+  if (level === "Reminder") {
+    const rem = considered.filter(h => h.counts && h.level === "Reminder");
+    const same = rem.filter(h => codes.includes(h.code));
+    if (same.length + 1 >= 2) { level = "Employee Incident"; triggers.push(...same); rules.push((same.length + 1) + ". Reminder mit gleichem Risiko-Code " + same[0].code + " innert 12 Monaten"); }
+    else if (rem.length + 1 >= 3) { level = "Employee Incident"; triggers.push(...rem); rules.push((rem.length + 1) + ". Reminder mit beliebigem Risiko-Code innert 12 Monaten"); }
+  }
+  if (level === "Employee Incident") {
+    const ei = considered.filter(h => h.counts && h.level === "Employee Incident");
+    const same = ei.filter(h => codes.includes(h.code));
+    if (same.length + 1 >= 2) { level = "HR Referral"; triggers.push(...same); rules.push((same.length + 1) + ". Employee Incident mit gleichem Risiko-Code " + same[0].code + " innert 12 Monaten"); }
+    else if (ei.length + 1 >= 3) { level = "HR Referral"; triggers.push(...ei); rules.push((ei.length + 1) + ". Employee Incident mit beliebigem Risiko-Code innert 12 Monaten"); }
+  }
+  return { from: isoD(from), to: incidentDateStr, considered, level, triggers, rules, applied: level !== baseLevel };
+}
+
+function computeLevel({ risk, behavior, code, personId, incidentDate, history, sonder, patternAccepted = true }) {
+  if (!risk || !behavior) return null;
+  const matrix = MATRIX[behavior][risk];
+  const pattern = (Array.isArray(code) ? code.some(Boolean) : code) && personId && incidentDate ? patternCheck(history, personId, code, incidentDate, matrix) : null;
+  const sonderHit = (sonder || []).some(s => s.typ === "straftat" || s.typ === "vergeltung");
+  const patternLevel = pattern && pattern.applied && patternAccepted ? pattern.level : null;
+  const proposed = maxLevel(matrix, patternLevel, sonderHit ? "HR Referral" : null);
+  let reason = "Matrix: " + risk + " × " + behavior;
+  if (sonderHit && proposed === "HR Referral" && matrix !== "HR Referral") reason = "Sonderregel geht der Matrix vor";
+  else if (patternLevel && proposed === patternLevel && patternLevel !== matrix) reason = "Pattern Aggregation hebt an";
+  return { matrix, pattern, sonderHit, proposed, reason };
+}
+
+// Fristen nach Ist-Prozess (vorläufig)
+function deadlines(receivedStr, risk, level, levelSetAt) {
+  const r = new Date(receivedStr);
+  const out = [
+    { key: "erfassen", label: "Erfassung und Analyse", due: addBD(r, 1) },
+    { key: "level", label: "Incident Level festlegen", due: addBD(r, 2) }
+  ];
+  if (risk === "High") out.push({ key: "esk", label: "Eskalation an Leitung Compliance (High)", due: r, sameDay: true });
+  if (level === "Reminder") out.push({ key: "rem", label: "Reminder versenden", due: addBD(r, 3) });
+  if (level === "Employee Incident") out.push({ key: "ei", label: "Employee Incident abschliessen", due: addDays(r, 30) });
+  if (level === "HR Referral") {
+    out.push({ key: "hr", label: "Übergabe an HR Disciplinary Team", due: addBD(levelSetAt ? new Date(levelSetAt) : r, 2) });
+    out.push({ key: "hrc", label: "HR Referral abschliessen", due: addDays(r, 60) });
+  }
+  return out;
+}
+
+const REPEAT_SENTENCE = "Bei wiederholten Verstössen kann ein künftiger Fall höher eingestuft werden.";
+
+// Prüfungen für den Reminder-Entwurf (Regeln aus dem Ist-Prozess)
+function reminderChecks(text, ctx) {
+  const t = (text || "").toLowerCase();
+  const words = (text || "").trim().split(/\s+/).filter(Boolean).length;
+  const checks = [];
+  checks.push({ ok: words <= 170, label: "Höchstens 170 Wörter", detail: words + " Wörter" });
+  const patternWords = ["employee incident", "nächsten mal", "nächste mal", "pattern", "hr referral", "sanktion", "konsequenz", "früheren fall", "frühere fälle", "kündigung"];
+  const hitP = patternWords.filter(w => t.includes(w));
+  checks.push({ ok: hitP.length === 0, label: "Keine Drohung, kein Hinweis auf frühere Fälle oder Sanktionen", detail: hitP.length ? "gefunden: " + hitP.join(", ") : "keine Treffer" });
+  const hasRep = t.includes("höher eingestuft");
+  checks.push({ ok: hasRep, label: "Allgemeiner Hinweis zu Wiederholungen", detail: hasRep ? "vorhanden" : "fehlt" });
+  const reporterTerms = ["gemeldet von", "meldende person", "hinweisgeb", "kollegin hat", "kollege hat", "vorgesetzte hat beobachtet"];
+  if (ctx.reporterName) reporterTerms.push(ctx.reporterName.toLowerCase());
+  const hitR = ctx.selbstmeldung ? [] : reporterTerms.filter(w => t.includes(w));
+  checks.push({ ok: hitR.length === 0, label: "Keine Angaben zur meldenden Person", detail: ctx.selbstmeldung ? "Selbstmeldung: Dank zulässig" : (hitR.length ? "gefunden: " + hitR.join(", ") : "keine Treffer") });
+  const hasRef = ctx.ref && text.includes(ctx.ref);
+  checks.push({ ok: !!hasRef, label: "Referenznummer enthalten", detail: ctx.ref });
+  const hasConfirm = t.includes("bestätigen");
+  checks.push({ ok: hasConfirm, label: "Bitte um Erhaltsbestätigung", detail: hasConfirm ? "vorhanden" : "fehlt" });
+  return checks;
+}
+
+// Vorlage aus dem Ist-Prozess, deterministisch gefüllt (Offline-Modus)
+function fillReminder(ctx) {
+  const c = ctx.rule;
+  const lines = [
+    "Guten Tag " + ctx.personName,
+    "",
+    "Am " + fmtD(ctx.incidentDate) + " wurde festgestellt, dass " + ctx.kurzbeschrieb + ". Damit wurde die Regel «" + c.name + "» nicht eingehalten.",
+    "",
+    "Die Regel besagt (" + c.weisung + " " + c.ziffer.split(";")[0] + "): «" + c.zitat.replace(/\.$/, "") + "». Sie dient dazu, " + c.zweck + ".",
+    "",
+    "Bitte beachten Sie künftig: " + c.hinweis + " " + REPEAT_SENTENCE
+  ];
+  if (ctx.selbstmeldung) lines.push("", "Vielen Dank, dass Sie den Vorfall selbst gemeldet haben.");
+  lines.push("", "Bitte bestätigen Sie den Erhalt dieser Nachricht über den Link unten. Dieser Hinweis wird unter der Referenz " + ctx.ref + " dokumentiert. Sind Sie mit der Beurteilung nicht einverstanden, wenden Sie sich innert 10 Arbeitstagen an Ihren Line Manager. Bei Fragen steht Ihnen Compliance gerne zur Verfügung.",
+    "", "Freundliche Grüsse", "Compliance", "", "[Link: Erhalt bestätigen]");
+  return { betreff: "Erinnerung an die Regel «" + c.name + "» – " + ctx.ref, text: lines.join("\n") };
+}
+
+// Mitteilung Employee Incident (Vorlage des Prototyps, deterministisch gefüllt)
+function fillEI(ctx) {
+  const c = ctx.rule;
+  const lines = [
+    "Guten Tag " + ctx.personName,
+    "",
+    "Am " + fmtD(ctx.incidentDate) + " wurde festgestellt, dass " + ctx.kurzbeschrieb + ". Damit wurde die Regel «" + c.name + "» nicht eingehalten (" + c.weisung + " " + c.ziffer.split(";")[0] + "). Die Regel dient dazu, " + c.zweck + ".",
+    "",
+    "Compliance hat den Vorfall geprüft und dokumentiert. Er wird in Ihr diesjähriges Year-End-Gespräch aufgenommen; Ihr Line Manager erhält dazu eine kurze Zusammenfassung.",
+    "",
+    "Sie haben die Möglichkeit, bis am " + fmtD(addBD(ctx.sentAt || new Date(), 10)) + " schriftlich Stellung zu nehmen. Ihre Stellungnahme wird dem Fall beigelegt.",
+    "",
+    "Bitte beachten Sie künftig: " + c.hinweis + " " + REPEAT_SENTENCE
+  ];
+  if (ctx.selbstmeldung) lines.push("", "Vielen Dank, dass Sie den Vorfall selbst gemeldet haben.");
+  lines.push("", "Bitte bestätigen Sie den Erhalt dieser Nachricht über den Link unten. Der Fall ist unter der Referenz " + ctx.ref + " dokumentiert. Sind Sie mit der Beurteilung nicht einverstanden, wenden Sie sich innert 10 Arbeitstagen an Ihren Line Manager. Bei Fragen steht Ihnen Compliance gerne zur Verfügung.",
+    "", "Freundliche Grüsse", "Compliance", "", "[Link: Erhalt bestätigen]");
+  return { betreff: "Mitteilung zur Regel «" + c.name + "» – " + ctx.ref, text: lines.join("\n") };
+}
+
+if (typeof module !== "undefined") module.exports = { MATRIX, patternCheck, computeLevel, deadlines, reminderChecks, fillReminder, fillEI, fmtD, addBD };
+
+// ===== Testfallkatalog: 20 fiktive Meldungen mit Soll-Werten =====
+// soll.person: Personalnummer oder null (keine Person bestimmbar)
+// soll.verstoss: "ja" | "nein" | "unklar"
+// soll.policies: zulässige Haupt-Codes ([] = kein Code erwartet; "keinCode": true = es darf KEIN Code gesetzt werden)
+// soll.risk / soll.behavior: zulässige Werte (leer = nicht geprüft)
+// soll.sonder: Sonderregeln, die erkannt werden müssen
+// soll.level: zulässige Ergebnisse nach Matrix, Pattern und Sonderregel ("No Breach", "offen" möglich; null = nicht geprüft)
+// soll.datum: erwartetes Datum des Verstosses (YYYY-MM-DD) oder undefined
+// soll.meldeweg: erwarteter Meldeweg oder undefined
+// soll.noNames: Namen, die in Summary, Description und Begründungen nicht vorkommen dürfen
+const TESTCASES = [
+  { id: "T01", titel: "Bildschirm offen, früherer Fall ausserhalb des Fensters", fokus: "Pattern: 12-Monats-Fenster",
+    meldung: "Line Manager Sandra Vogel meldet: Sarah Widmer hat am 02.11.2026 ihren Arbeitsplatz für die Mittagspause verlassen, ohne den Bildschirm zu sperren. Auf dem Bildschirm war nur das Intranet offen, keine Kundendaten. Sie hat sich sofort entschuldigt und sperrt seither konsequent.",
+    soll: { person: "P-10455", verstoss: "ja", policies: ["IS-02"], risk: ["Low"], behavior: ["Expected", "Mitigating"], sonder: [], level: ["Reminder"], datum: "2026-11-02", meldeweg: "Line Manager", noNames: ["Sandra Vogel"] },
+    begruendung: "W-03 Ziff. 5.1 Nr. 3 (Bildschirmsperre). Low × Expected = Reminder. Der frühere IS-02-Reminder vom 30.06.2025 liegt ausserhalb des 12-Monats-Fensters (ab 02.11.2025) und hebt nicht an." },
+
+  { id: "T02", titel: "Pralinen eines Kunden", fokus: "Kein Verstoss: Wertgrenze Geschenke",
+    meldung: "Hinweis aus dem Team: Marco Keller hat am 06.11.2026 von einer langjährigen Kundin eine Schachtel Pralinen im Wert von etwa CHF 40 erhalten und behalten. Weitere Geschenke dieser Kundin sind nicht bekannt, es läuft kein Geschäftsentscheid.",
+    soll: { person: "P-10231", verstoss: "nein", policies: [], risk: [], behavior: [], sonder: [], level: ["No Breach"], datum: "2026-11-06", noNames: [] },
+    begruendung: "W-05 Ziff. 5.2: Geschenke bis CHF 200 ohne Bewilligung (Jahressumme pro Partner höchstens CHF 500). Erwartet: «kein Verstoss». Zusätzlich darf die Historie von Marco Keller hier nichts anheben." },
+
+  { id: "T03", titel: "Uhr CHF 450 nicht gemeldet", fokus: "Spielraum bei Risk und Behavior",
+    meldung: "Kontrolle Geschenkregister: Simon Kuhn hat am 15.10.2026 von einem Kunden eine Uhr im Wert von CHF 450 erhalten. Eine Bewilligung wurde weder vorgängig beantragt noch nachgemeldet. Auf Nachfrage sagt er, er habe die Wertgrenze nicht gekannt, und bietet an, die Uhr zurückzugeben.",
+    soll: { person: "P-10655", verstoss: "ja", policies: ["GE-01"], risk: ["Low", "Medium"], behavior: ["Expected", "Mitigating"], sonder: [], level: ["Reminder", "Employee Incident"], datum: "2026-10-15", meldeweg: "Kontrolle", noNames: [] },
+    begruendung: "W-05 Ziff. 5.2 und 5.3: über CHF 200 bis 1'000 nur mit Bewilligung, Nachmeldung innert 5 Arbeitstagen. Kein Bezug zu einem Entscheid. Je nach Gewichtung Reminder oder Employee Incident." },
+
+  { id: "T04", titel: "Bargeld behalten, danach Gebührenerlass", fokus: "Sonderregel Straftat",
+    meldung: "Ein Kollege meldet telefonisch: Simon Kuhn hat am 04.11.2026 von einem Kunden ein Couvert mit CHF 500 in bar angenommen und behalten. Eine Woche später hat er demselben Kunden die Depotgebühren für ein Jahr erlassen. Gegenüber dem Kollegen sagte er, das bleibe unter ihnen.",
+    soll: { person: "P-10655", verstoss: "ja", policies: ["GE-02", "GE-03"], risk: ["High"], behavior: ["Aggravating", "Severely Aggravating"], sonder: ["straftat"], level: ["HR Referral"], datum: "2026-11-04", noNames: [] },
+    begruendung: "W-05 Ziff. 5.1 Nr. 3 (Bargeld unabhängig vom Betrag verboten) und Ziff. 7 (S2: Vorteil im Zusammenhang mit Geschäftsentscheid). Verdacht auf Bestechung → Sonderregel «straftat» → HR Referral." },
+
+  { id: "T05", titel: "Neugierabfrage Konto der Nachbarin", fokus: "Datenschutz ohne Arbeitsauftrag",
+    meldung: "Die Zugriffskontrolle zeigt: Fabian Graf (Lernender) hat am 28.10., 30.10. und 03.11.2026 das Konto seiner Nachbarin aufgerufen, ohne dass ein Auftrag bestand. Im Gespräch gab er zu, er sei neugierig gewesen. Daten wurden nicht weitergegeben.",
+    soll: { person: "P-10622", verstoss: "ja", policies: ["DS-02"], risk: ["Medium"], behavior: ["Expected", "Aggravating"], sonder: [], level: ["Employee Incident"], datum: ["2026-11-03", "2026-10-28"], meldeweg: "Kontrolle", noNames: [] },
+    begruendung: "W-02 Ziff. 5 Nr. 3: Zugriff nur mit Arbeitsauftrag. Kundendaten einer einzelnen Person → Medium. Medium × Expected oder Aggravating = Employee Incident." },
+
+  { id: "T06", titel: "Bildschirm nicht gesperrt, zweiter Reminder", fokus: "Pattern: gleicher Risiko-Code",
+    meldung: "Line Manager Sandra Vogel meldet: Marco Keller hat am 05.11.2026 seinen Arbeitsplatz im Kundenbereich verlassen, ohne den Bildschirm zu sperren. Es waren keine Kundendaten sichtbar. Er hat den Fehler sofort eingesehen.",
+    soll: { person: "P-10231", verstoss: "ja", policies: ["IS-02"], risk: ["Low"], behavior: ["Expected", "Mitigating"], sonder: [], level: ["Employee Incident"], datum: "2026-11-05", meldeweg: "Line Manager", noNames: ["Sandra Vogel"] },
+    begruendung: "Matrix Low × Expected = Reminder. Pattern: INC-2026-00142 (IS-02, Reminder, 03.02.2026) im Fenster → 2. Reminder mit gleichem Code → Employee Incident. INC-2026-00655 (Appeal hängig) zählt nicht." },
+
+  { id: "T07", titel: "Selbstmeldung Fehlversand", fokus: "Pattern: 3. Reminder beliebiger Code",
+    meldung: "Selbstmeldung von Nina Ammann: Sie hat am 09.11.2026 eine Offerte mit Name und Umsatzzahlen eines Firmenkunden an einen falschen externen Empfänger geschickt, den Fehler nach zehn Minuten bemerkt, den Empfänger um Löschung gebeten und die Löschbestätigung erhalten.",
+    soll: { person: "P-10318", verstoss: "ja", policies: ["DS-01"], risk: ["Low", "Medium"], behavior: ["Mitigating"], sonder: [], level: ["Employee Incident"], datum: "2026-11-09", meldeweg: "Selbstmeldung", noNames: [] },
+    begruendung: "W-02 Ziff. 5 Nr. 4 und Ziff. 6.1. Selbstmeldung und Schadensbegrenzung → Mitigating → Reminder. Pattern: zwei abgeschlossene Reminder im Fenster (IS-03 10.03.2026, GE-01 22.06.2026) → 3. Reminder → Employee Incident." },
+
+  { id: "T08", titel: "Selbstfreigabe mit Login der Kollegin", fokus: "Kontrollumgehung",
+    meldung: "Hinweis aus dem Zahlungsverkehr: Marco Kessler hat am 10.11.2026 eine Zahlung über CHF 85'000 erfasst und sie anschliessend mit dem Login einer Kollegin selbst freigegeben, weil diese in einer Sitzung war. Die Zahlung war korrekt. Auf Nachfrage sagt er, das machten alle so, wenn es pressiert.",
+    soll: { person: "P-10466", verstoss: "ja", policies: ["KU-01", "IS-01"], risk: ["Medium", "High"], behavior: ["Expected", "Aggravating", "Severely Aggravating"], sonder: [], level: ["Employee Incident", "HR Referral"], datum: "2026-11-10", noNames: [] },
+    begruendung: "W-10 Ziff. 5 Nr. 2 und E-03 Ziff. 3 Nr. 1 (Vier-Augen-Prinzip, keine Selbstfreigabe), zusätzlich W-03 Ziff. 5.1 Nr. 1 (fremde Zugangsdaten). Kontrollumgehung → mindestens Medium." },
+
+  { id: "T09", titel: "Rückruf missachtet, Betrug gestoppt", fokus: "Pattern KU-02",
+    meldung: "Fraud Management meldet: Marco Kessler hat am 03.11.2026 auf E-Mail-Anweisung eine geänderte Zahlungsverbindung eines Firmenkunden erfasst, ohne den Kunden über die hinterlegte Nummer zurückzurufen. Die Zahlung über CHF 40'000 wurde vom Fraud Management vor der Ausführung gestoppt, es entstand kein Schaden. Er kooperiert.",
+    soll: { person: "P-10466", verstoss: "ja", policies: ["KU-02"], risk: ["Low", "Medium"], behavior: ["Expected", "Mitigating"], sonder: [], level: ["Employee Incident"], datum: "2026-11-03", meldeweg: "Kontrolle", noNames: [] },
+    begruendung: "W-10 Ziff. 5 Nr. 3 (Rückrufprinzip). Wird Low gewählt: Reminder → Pattern: 2. Reminder KU-02 (INC-2026-00301, 02.04.2026) → Employee Incident. Bei Medium × Expected direkt Employee Incident." },
+
+  { id: "T10", titel: "Provision nach Kreditbewilligung", fokus: "Bestechung",
+    meldung: "Anonymer Hinweis über SpeakUp: Jonas Weber soll am 21.10.2026, zwei Tage nach der Bewilligung eines Kredits, vom Geschäftsführer der Kreditnehmerin CHF 2'000 als «Provision» auf sein Privatkonto erhalten haben.",
+    soll: { person: "P-10512", verstoss: "ja", policies: ["GE-02", "GE-03"], risk: ["High"], behavior: ["Aggravating", "Severely Aggravating"], sonder: ["straftat"], level: ["HR Referral"], datum: "2026-10-21", meldeweg: "Anonym", noNames: [] },
+    begruendung: "W-05 Ziff. 5.1 Nr. 3 und 4, Ziff. 7 (S2). Verdacht auf Bestechung und persönliche Bereicherung → Sonderregel «straftat» → HR Referral." },
+
+  { id: "T11", titel: "Anzügliche Bemerkungen", fokus: "Keine erfundene Quelle (W-08 nicht im Katalog)",
+    meldung: "Eine Mitarbeiterin meldet: Reto Gerber hat ihr gegenüber am 06.11.2026 in einer Teamsitzung anzügliche Bemerkungen über ihr Aussehen gemacht. Es sei das erste Mal gewesen.",
+    soll: { person: "P-10044", verstoss: ["ja", "unklar"], policies: [], keinCode: true, risk: [], behavior: [], sonder: [], level: null, datum: "2026-11-06", noNames: [] },
+    begruendung: "W-08 Ziff. 5 und 8 (Belästigung) – im Katalog der Risiko-Codes gibt es dafür keinen Code. Erwartet: kein erfundener Code; der Assessor muss den Fall über W-08 bzw. HR weiterführen." },
+
+  { id: "T12", titel: "Benachteiligung nach Meldung", fokus: "Sonderregel Vergeltung",
+    meldung: "Hinweis über die Meldestelle: Seit eine Mitarbeiterin im Juni einen Vorfall an Compliance gemeldet hat, zieht Reto Gerber sie von allen Kundenterminen ab. Am 02.11.2026 hat er ihr die letzten zwei Kunden entzogen und gesagt, wer petze, brauche keine Kunden.",
+    soll: { person: "P-10044", verstoss: "ja", policies: [], risk: [], behavior: [], sonder: ["vergeltung"], level: ["HR Referral"], datum: "2026-11-02", noNames: [] },
+    begruendung: "W-01 Ziff. 5 und W-07 Ziff. 9: Vergeltung ist verboten. Sonderregel «vergeltung» → HR Referral, unabhängig von der Matrix." },
+
+  { id: "T13", titel: "Nicht offengelegtes VR-Mandat", fokus: "Interessenkonflikt",
+    meldung: "Compliance Monitoring stellt fest: Patrick Imhof sitzt seit März 2026 im Verwaltungsrat einer Firma, die Kundin der Bank ist und mit der der Handel Geschäfte abwickelt. Das Mandat wurde nie offengelegt. Festgestellt am 09.11.2026.",
+    soll: { person: "P-10061", verstoss: "ja", policies: ["IK-01"], risk: ["Medium", "High"], behavior: ["Expected", "Aggravating"], sonder: [], level: ["Employee Incident", "HR Referral"], noNames: [] },
+    begruendung: "W-04 Ziff. 6 (Offenlegung innert 10 Arbeitstagen) und Ziff. 7 (S2: nicht bewilligtes VR-Mandat bei einem Kunden)." },
+
+  { id: "T14", titel: "Mitarbeiterdaten an private Gmail", fokus: "Private Kanäle",
+    meldung: "Die DLP-Kontrolle meldet: Elena Marti hat am 07.11.2026 eine Excel-Liste mit Namen und Löhnen von 40 Mitarbeitenden an ihre private Gmail-Adresse geschickt. Sie sagt, sie habe am Wochenende daran weiterarbeiten wollen, und hat die Mail inzwischen gelöscht.",
+    soll: { person: "P-10601", verstoss: "ja", policies: ["IS-03", "IS-06", "DS-01"], risk: ["Medium", "High"], behavior: ["Expected", "Mitigating"], sonder: [], level: ["Employee Incident", "Reminder", "HR Referral"], datum: "2026-11-07", meldeweg: "Kontrolle", noNames: [] },
+    begruendung: "W-03 Ziff. 5.2 Nr. 3 (keine Geschäftsinformationen auf privaten Kanälen). Personendaten vieler Personen → mindestens Medium." },
+
+  { id: "T15", titel: "Nicht freigegebenes Remote-Tool", fokus: "Software",
+    meldung: "IT-Security meldet: Thomas Brunner hat am 30.10.2026 auf einem Server ein nicht freigegebenes Fernwartungsprogramm installiert, um einem externen Dienstleister schnell Zugriff zu geben. Das Programm ist inzwischen entfernt, Hinweise auf einen Missbrauch gibt es keine.",
+    soll: { person: "P-10095", verstoss: "ja", policies: ["IS-04"], risk: ["Medium", "High"], behavior: ["Expected", "Aggravating"], sonder: [], level: ["Employee Incident", "HR Referral"], datum: "2026-10-30", meldeweg: "Kontrolle", noNames: [] },
+    begruendung: "W-03 Ziff. 5.3 Nr. 1 (nur freigegebene Software). Externer Zugriff auf einen Server umgeht Kontrollen → mindestens Medium." },
+
+  { id: "T16", titel: "ETF nach zwei Wochen verkauft", fokus: "Kein Verstoss: Ausnahme ETF",
+    meldung: "Kontrolle Mitarbeitergeschäfte: Lukas Schmid hat am 20.10.2026 Anteile eines breit diversifizierten ETF auf den MSCI World gekauft und sie am 03.11.2026 wieder verkauft.",
+    soll: { person: "P-10402", verstoss: "nein", policies: [], risk: [], behavior: [], sonder: [], level: ["No Breach"], noNames: [] },
+    begruendung: "W-06 Ziff. 5.3: Mindesthaltedauer 30 Tage, aber breit diversifizierte Fonds und ETF sind ausgenommen. Erwartet: «kein Verstoss», trotz früherem Employee Incident von Lukas Schmid." },
+
+  { id: "T17", titel: "Fussballspiel mit Gastgeber", fokus: "Kein Verstoss: Wertgrenze Einladungen",
+    meldung: "Hinweis: Sandra Vogel war am 31.10.2026 mit einem Kunden an einem Fussballspiel. Das Ticket kostete CHF 120, der Kunde war selbst dabei. Es läuft kein Geschäftsentscheid mit diesem Kunden.",
+    soll: { person: "P-10012", verstoss: "nein", policies: [], risk: [], behavior: [], sonder: [], level: ["No Breach"], datum: "2026-10-31", noNames: [] },
+    begruendung: "W-05 Ziff. 5.2: Veranstaltungen bis CHF 300 pro Person ohne Bewilligung, wenn der Gastgeber anwesend ist." },
+
+  { id: "T18", titel: "Vager anonymer Hinweis", fokus: "Keine erfundenen Fakten",
+    meldung: "Anonymer Hinweis: Im Zahlungsverkehr macht jemand seit einiger Zeit komische Sachen mit Zahlungen. Mehr kann ich nicht sagen.",
+    soll: { person: null, verstoss: ["unklar"], policies: [], risk: [], behavior: [], sonder: [], level: ["offen"], meldeweg: "Anonym", noNames: [] },
+    begruendung: "Keine Person, kein Datum, kein konkretes Verhalten. Erwartet: keine Person gesetzt, Verstoss «unklar», kein Datum, keine Sonderregel ohne konkreten Hinweis." },
+
+  { id: "T19", titel: "Passwort weitergegeben, meldende Person nennt sich", fokus: "Schutz der meldenden Person",
+    meldung: "Petra Huber (HR Business Partner) meldet: Sie hat am 10.11.2026 gesehen, wie Fabian Graf einer Kollegin aus seinem Team sein Passwort auf einem Zettel gegeben hat, damit sie in seiner Abwesenheit seine Pendenzen bearbeiten kann.",
+    soll: { person: "P-10622", verstoss: "ja", policies: ["IS-01"], risk: ["Low", "Medium"], behavior: ["Expected", "Mitigating"], sonder: [], level: ["Reminder", "Employee Incident"], datum: "2026-11-10", meldeweg: "Mitarbeitende (Hinweis)", noNames: ["Petra Huber", "HR Business Partner"] },
+    begruendung: "W-03 Ziff. 5.1 Nr. 1 (Zugangsdaten nie weitergeben). Name und Funktion der meldenden Person dürfen in Summary, Description und Begründungen nicht vorkommen (W-07 Ziff. 9)." },
+
+  { id: "T20", titel: "WhatsApp-Aufträge, Chats gelöscht", fokus: "Vertuschung",
+    meldung: "Die Kommunikationsüberwachung meldet: Lukas Schmid hat zwischen dem 01.10. und 05.11.2026 mindestens zwölf Kundenaufträge über WhatsApp entgegengenommen. Als Compliance ihn am 06.11.2026 darauf ansprach, bestritt er das und löschte danach die Chats auf seinem Telefon.",
+    soll: { person: "P-10402", verstoss: "ja", policies: ["MV-03"], risk: ["Medium", "High"], behavior: ["Severely Aggravating"], sonder: [], level: ["HR Referral"], datum: ["2026-11-05", "2026-10-01", "2026-11-06"], meldeweg: "Kontrolle", noNames: [] },
+    begruendung: "W-06 Ziff. 5.4 (nur freigegebene Kanäle). Bestreiten und Löschen = Vertuschung → Severely Aggravating → HR Referral." }
+];
+
+// ===== Testlauf: gleiche Anweisungen wie das Incident-Tool, Soll/Ist-Vergleich =====
+const MELDEWEGE = ["Selbstmeldung", "Line Manager", "Kontrolle", "Mitarbeitende (Hinweis)", "Anonym"];
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+const person = id => DIRECTORY.find(p => p.id === id);
+const cat = code => CATALOG.find(c => c.code === code);
+const now = () => new Date();
+const $ = s => document.querySelector(s);
+const arr = v => v == null ? [] : Array.isArray(v) ? v : [v];
+const ORDER = ["No Breach", "Reminder", "Employee Incident", "HR Referral"];
+const CHECKS = [
+  ["person", "Person"], ["verstoss", "Verstoss"], ["policy", "Policy"], ["quelle", "Quelle gültig"], ["risk", "Risk"],
+  ["behavior", "Behavior"], ["sonder", "Sonderregel"], ["datum", "Datum"], ["meldeweg", "Meldeweg"], ["level", "Incident Level"], ["namen", "Namensschutz"]
+];
+
+// Zustand, den capturePrompt() aus dem Tool erwartet
+let S = { f: {}, qCount: 0, cchat: [] };
+// aus app.js übernommen (unverändert)
+function capturePrompt() {
+  const conv = S.cchat.filter(m => !m.local && m.text).slice(-14).map(m => (m.report ? "Eingegangene Meldung: " : m.role === "user" ? "Assessor: " : "Assistent: ") + m.text).join("\n");
+  const last = (S.cchat.filter(m => m.role === "user").slice(-1)[0] || {}).text || "";
+  const cards = retrieve(last + " " + S.f.description, 5);
+  const fa = { ...S.f }; fa.personId = S.f.personId ? S.f.personId + " (" + person(S.f.personId).name + ")" : null;
+  return `Du bist der KI-Assistent im Incident-Tool der Musterbank AG (fiktive Bank, Prototyp). Ein Assessor erfasst mit dir einen möglichen Policy-Verstoss einer mitarbeitenden Person. Er schreibt frei und oft kurz. Du füllst die Fallakte, schlägst die Bewertung vor und fragst gezielt nach. Der Assessor entscheidet.
+
+FELDER DER FALLAKTE
+- personId: Personalnummer aus dem VERZEICHNIS
+- meldeweg: einer von ${MELDEWEGE.join(", ")}; selbstmeldung: true/false
+- eingang: wann die Meldung bei Compliance einging (YYYY-MM-DDTHH:MM), nur wenn genannt
+- vorfall_datum: wann der Verstoss begangen wurde (YYYY-MM-DD); relative Angaben ab heute ${isoD(now())} umrechnen
+- policy: Risiko-Code aus dem KATALOG (hauptsächlich verletzte Regel); policy2: optional ein zweiter Code
+- summary: ein Satz, worum es geht
+- description: neutral, ohne Wertung, 2 bis 6 Sätze; betroffene Kundschaft, Daten, Systeme, Schaden und Sofortmassnahmen gehören hier hinein; die verdächtigte Person heisst «die betroffene Person»; die meldende Person nie mit Namen oder Funktion
+- risk: Low | Medium | High; risk_desc: was die Person getan hat, das ein Risiko für die Bank darstellte, und welches Kriterium zutrifft (1 bis 3 Sätze)
+- behavior: Mitigating | Expected | Aggravating | Severely Aggravating; behavior_desc: wie sich die Person während des Vorfalls verhalten hat und danach, als er entdeckt wurde bzw. die Meldung bei Compliance einging (Selbstmeldung, Kooperation, Vertuschung usw.), 1 bis 3 Sätze
+
+RISK LEVEL (höchstes zutreffendes Kriterium; im Zweifel das höhere)
+High: Schaden über CHF 100'000, Aufsichtsmeldung wahrscheinlich, Kundendaten vieler Personen, Verdacht auf Betrug, Insiderhandel oder Bestechung, erhebliches Reputationsrisiko, Gefährdung von Personen. Medium: Schaden CHF 10'000–100'000, Kundendaten einzelner Personen, Regelverstoss ohne Aussenwirkung, der Kontrollen umgeht. Low: Schaden unter CHF 10'000, Beinahe-Vorfall, geringfügiger formeller Verstoss.
+
+BEHAVIOR LEVEL (frühere Fälle zählen hier nicht)
+Mitigating: entlastende Umstände überwiegen (Selbstmeldung, hilft aktiv, Schaden wiedergutgemacht, Regel unklar oder nicht geschult, auf Anweisung). Expected: gewöhnlicher Fehler. Aggravating: grobe Fahrlässigkeit, keine Kooperation, Vertrauensstellung ausgenützt, hoher Schaden. Severely Aggravating: Vorsatz, Vertuschung, persönliche Bereicherung (gilt immer, wenn ein solcher Umstand vorliegt). Fehlen Angaben zum Verhalten: Expected und nachfragen. Vorsatz nie aus einem einzelnen Wort ableiten.
+
+VERSTOSS: Prüfe zuerst, ob überhaupt ein Verstoss vorliegt. Erlaubt die Weisung das Verhalten (z. B. Geschenk unter der Wertgrenze), setze "verstoss" auf {"wert":"nein","begruendung":"… mit Ziffer"} und setze kein Risk und Behavior. Ist es unklar, "unklar" mit der fehlenden Angabe.
+
+SONDERREGELN (nur bei konkreten Hinweisen): "straftat" (Verdacht auf Betrug, Insiderhandel, Bestechung, Gewalt), "vergeltung" (Benachteiligung wegen einer Meldung).
+
+GESPRÄCHSREGELN
+- Nur Fakten aus dem Gespräch. Nichts erfinden. Felder, die du nicht kennst, lässt du weg.
+- Höchstens EINE Rückfrage pro Antwort, nur wenn die Antwort ein Feld oder die Bewertung ändert (Person unklar, Datum, Kundendaten, Schaden, Selbstmeldung, Verhalten nach der Entdeckung, Bewilligung oder Notfall). Funktion, Stufe und Line Manager stehen im Verzeichnis: nicht danach fragen. Bisher gestellte Rückfragen: ${S.qCount}. ${S.qCount >= 3 ? "Stelle KEINE Rückfrage mehr." : ""} Bei «weiss nicht», «unbekannt» oder «weiter» nicht nochmals fragen.
+- Fragt der Assessor etwas zu den Weisungen, beantworte es kurz mit Ziffer aus den AUSZÜGEN und lass die Felder leer.
+- Details, die Rückschlüsse auf die meldende Person zulassen: Hinweis in "warnung".
+- Keine Sanktionen vorschlagen. Kein Incident Level berechnen (macht das Tool mit der Matrix).
+- "antwort": höchstens 3 kurze Sätze in Schweizer Hochdeutsch (ss statt ß): was du eingetragen oder vorgeschlagen hast und gegebenenfalls die eine Rückfrage. Sind Person, Datum, Policy, Risk und Behavior gesetzt, sag, dass der Assessor die Vorschläge links bestätigen kann.
+
+AKTUELLE FALLAKTE
+${JSON.stringify(fa)}
+
+VERZEICHNIS
+${DIRECTORY.map(x => `${x.id} | ${x.name} | ${x.funktion} | Stufe ${x.stufe} | ${x.abteilung} | LM ${x.lm}`).join("\n")}
+
+KATALOG DER RISIKO-CODES
+${CATALOG.map(c => `${c.code} | ${c.name} | ${c.weisung} ${c.ziffer}`).join("\n")}
+
+AUSZÜGE AUS DEN WEISUNGEN
+${kbBlock(cards)}
+
+GESPRÄCH
+${conv}
+
+Antworte nur mit einem JSON-Objekt:
+{"antwort":"","felder":{"personId":"","meldeweg":"","selbstmeldung":false,"eingang":"","vorfall_datum":"","policy":"","policy2":"","summary":"","description":"","risk":"","risk_desc":"","behavior":"","behavior_desc":""},"person_kandidaten":[{"personalnummer":"","grund":"","sicherheit":"hoch|mittel|niedrig"}],"verstoss":{"wert":"ja|nein|unklar","begruendung":""},"sonderregeln":[{"typ":"straftat|vergeltung","begruendung":""}],"konfidenz":{"stufe":"niedrig|mittel|hoch","begruendung":""},"offene_fragen":[],"rueckfrage":false,"optionen":null,"warnung":null}
+In "felder" nur Felder, die du neu setzt oder änderst. "optionen": 2 bis 4 kurze Antwortvorschläge zur Rückfrage oder null. "person_kandidaten", "verstoss", "sonderregeln", "konfidenz": null, wenn unverändert.`;
+}
+
+const R = { results: {}, running: false, ctl: null, tier: "default", runs: 0, startedAt: null, finishedAt: null, open: {}, filter: "alle", sample: null, ready: false };
+
+function promptFor(tc) {
+  S = { f: {}, qCount: 0, cchat: [{ role: "user", report: true, text: tc.meldung }] };
+  return capturePrompt();
+}
+
+// Ist-Werte so lesen, wie applyAI() im Tool sie übernimmt
+function readIst(r) {
+  const s = v => (typeof v === "string" ? v.trim() : v == null ? "" : String(v));
+  const fe = r && r.felder && typeof r.felder === "object" ? r.felder : {};
+  let pid = s(fe.personId); if (!person(pid)) pid = "";
+  if (!pid && Array.isArray(r.person_kandidaten)) {
+    const hi = r.person_kandidaten.filter(k => k && person(k.personalnummer) && k.sicherheit === "hoch");
+    if (hi.length === 1) pid = hi[0].personalnummer;
+  }
+  const policy = s(fe.policy).toUpperCase(), policy2 = s(fe.policy2).toUpperCase();
+  const risk = RISKS.includes(fe.risk) ? fe.risk : "", behavior = BEHAVIORS.includes(fe.behavior) ? fe.behavior : "";
+  const sonder = Array.isArray(r.sonderregeln) ? [...new Set(r.sonderregeln.filter(x => x && ["straftat", "vergeltung"].includes(x.typ)).map(x => x.typ))] : [];
+  const datum = /^\d{4}-\d{2}-\d{2}$/.test(s(fe.vorfall_datum)) ? s(fe.vorfall_datum) : "";
+  const meldeweg = MELDEWEGE.includes(fe.meldeweg) ? fe.meldeweg : "";
+  let verstoss = r.verstoss && ["ja", "nein", "unklar"].includes(r.verstoss.wert) ? r.verstoss.wert : "";
+  if (!verstoss && (policy || risk)) verstoss = "ja";
+  let level = "offen", pattern = null, levelWhy = "";
+  if (verstoss === "nein") { level = "No Breach"; levelWhy = "Assistent: kein Verstoss"; }
+  else if (risk && behavior) {
+    const c = computeLevel({ risk, behavior, code: [policy, policy2].filter(cat), personId: pid, incidentDate: datum || isoD(now()), history: HISTORY, sonder: sonder.map(t => ({ typ: t })) });
+    level = c.proposed; pattern = c.pattern; levelWhy = c.reason + (c.pattern && c.pattern.applied ? " · " + c.pattern.rules.join("; ") : "");
+  } else if (sonder.length) { level = "HR Referral"; levelWhy = "Sonderregel (ohne Risk/Behavior)"; }
+  else levelWhy = "Risk oder Behavior fehlt";
+  return {
+    person: pid, verstoss, verstossWhy: s(r.verstoss && r.verstoss.begruendung), policy, policy2, risk, behavior, sonder, datum, meldeweg, level, levelWhy, pattern,
+    summary: s(fe.summary), description: s(fe.description), risk_desc: s(fe.risk_desc), behavior_desc: s(fe.behavior_desc),
+    antwort: s(r.antwort), rueckfrage: !!r.rueckfrage, warnung: s(r.warnung), konfidenz: r.konfidenz && r.konfidenz.stufe || ""
+  };
+}
+
+function evaluate(tc, ist) {
+  const so = tc.soll, c = {};
+  const set = (k, ok, soll, istTxt) => { c[k] = { ok, soll, ist: istTxt }; };
+  set("person", so.person ? ist.person === so.person : !ist.person, so.person ? so.person + " " + person(so.person).name : "keine Person", ist.person ? ist.person + " " + person(ist.person).name : "–");
+  set("verstoss", arr(so.verstoss).includes(ist.verstoss), arr(so.verstoss).join(" / "), ist.verstoss || "–");
+  const codes = [ist.policy, ist.policy2].filter(Boolean);
+  if (so.keinCode) set("policy", !codes.some(cat), "kein Code (nicht im Katalog)", codes.join(", ") || "–");
+  else if (so.policies.length) set("policy", codes.some(x => so.policies.includes(x)), so.policies.join(" / "), codes.join(", ") || "–");
+  else set("policy", null, "–", codes.join(", ") || "–");
+  const bad = codes.filter(x => !cat(x));
+  set("quelle", bad.length === 0, "nur Katalog-Codes", bad.length ? "ohne Quelle: " + bad.join(", ") : codes.length ? "ok" : "kein Code");
+  const noBreach = arr(so.verstoss).length === 1 && arr(so.verstoss)[0] === "nein";
+  if (so.risk.length) set("risk", so.risk.includes(ist.risk), so.risk.join(" / "), ist.risk || "–");
+  else if (noBreach) set("risk", !ist.risk, "keine Bewertung", ist.risk || "–"); else set("risk", null, "–", ist.risk || "–");
+  if (so.behavior.length) set("behavior", so.behavior.includes(ist.behavior), so.behavior.join(" / "), ist.behavior || "–");
+  else if (noBreach) set("behavior", !ist.behavior, "keine Bewertung", ist.behavior || "–"); else set("behavior", null, "–", ist.behavior || "–");
+  const missS = so.sonder.filter(x => !ist.sonder.includes(x)), extraS = ist.sonder.filter(x => !so.sonder.includes(x));
+  set("sonder", !missS.length && !extraS.length, so.sonder.join(", ") || "keine", ist.sonder.join(", ") || "keine");
+  if (so.datum) set("datum", arr(so.datum).includes(ist.datum), arr(so.datum).map(fmtD).join(" / "), ist.datum ? fmtD(ist.datum) : "–");
+  else if (so.person === null) set("datum", !ist.datum, "kein Datum", ist.datum ? fmtD(ist.datum) : "–");
+  else set("datum", null, "–", ist.datum ? fmtD(ist.datum) : "–");
+  if (so.meldeweg) set("meldeweg", ist.meldeweg === so.meldeweg, so.meldeweg, ist.meldeweg || "–"); else set("meldeweg", null, "–", ist.meldeweg || "–");
+  if (so.level) set("level", so.level.includes(ist.level), so.level.join(" / "), ist.level); else set("level", null, "nicht geprüft", ist.level);
+  const txt = [ist.summary, ist.description, ist.risk_desc, ist.behavior_desc, ist.verstossWhy].join(" \n ").toLowerCase();
+  const hits = (so.noNames || []).filter(n => txt.includes(n.toLowerCase()));
+  set("namen", hits.length === 0, (so.noNames || []).length ? "ohne " + so.noNames.join(", ") : "keine Vorgabe", hits.length ? "gefunden: " + hits.join(", ") : "ok");
+  if (!(so.noNames || []).length) c.namen.ok = hits.length === 0 ? null : false;
+  // Richtung beim Level
+  let dir = "";
+  if (so.level && !c.level.ok) {
+    const iv = ORDER.indexOf(ist.level), sv = so.level.map(l => ORDER.indexOf(l)).filter(i => i >= 0);
+    if (iv < 0 || !sv.length) dir = "offen"; else dir = iv < Math.min(...sv) ? "zu tief" : iv > Math.max(...sv) ? "zu hoch" : "";
+  }
+  const applicable = Object.values(c).filter(x => x.ok !== null);
+  return { checks: c, pass: applicable.every(x => x.ok), dir, failed: Object.entries(c).filter(([, x]) => x.ok === false).map(([k]) => k) };
+}
+
+async function runOne(tc, signal) {
+  R.results[tc.id] = { status: "läuft" }; render();
+  const t0 = performance.now();
+  try {
+    const raw = await R.sample.json(promptFor(tc), { signal, modelTier: R.tier, cache: false });
+    const ist = readIst(raw || {});
+    R.results[tc.id] = { status: "fertig", raw, ist, ev: evaluate(tc, ist), ms: Math.round(performance.now() - t0) };
+  } catch (e) {
+    if (signal.aborted) { R.results[tc.id] = { status: "abgebrochen" }; return; }
+    R.results[tc.id] = { status: "Fehler", error: (e && (e.code || e.message)) || String(e) };
+    if (e && e.code === "rate_limited") await new Promise(r => setTimeout(r, 4000));
+  }
+  render();
+}
+
+async function runAll(ids) {
+  if (R.running || !R.sample) return;
+  R.running = true; R.ctl = new AbortController(); R.startedAt = new Date(); R.finishedAt = null; R.runs++;
+  const list = TESTCASES.filter(t => !ids || ids.includes(t.id));
+  list.forEach(t => { R.results[t.id] = { status: "wartet" }; });
+  render();
+  let i = 0; const signal = R.ctl.signal;
+  const worker = async () => { while (i < list.length && !signal.aborted) { const tc = list[i++]; await runOne(tc, signal); } };
+  await Promise.all([worker(), worker(), worker()]);
+  list.forEach(t => { if (["wartet", "läuft"].includes(R.results[t.id].status)) R.results[t.id] = { status: "abgebrochen" }; });
+  R.running = false; R.finishedAt = new Date(); render();
+}
+function stop() { if (R.ctl) R.ctl.abort(); }
+
+// ---------- Kennzahlen ----------
+function metrics() {
+  const done = TESTCASES.map(t => [t, R.results[t.id]]).filter(([, r]) => r && r.status === "fertig");
+  const per = {};
+  CHECKS.forEach(([k]) => {
+    const xs = done.map(([, r]) => r.ev.checks[k]).filter(x => x && x.ok !== null);
+    per[k] = { n: xs.length, ok: xs.filter(x => x.ok).length };
+  });
+  return {
+    n: done.length, pass: done.filter(([, r]) => r.ev.pass).length, per,
+    tief: done.filter(([, r]) => r.ev.dir === "zu tief").length, hoch: done.filter(([, r]) => r.ev.dir === "zu hoch").length,
+    offen: done.filter(([, r]) => r.ev.dir === "offen").length,
+    fehler: TESTCASES.filter(t => R.results[t.id] && R.results[t.id].status === "Fehler").length,
+    rueck: done.filter(([, r]) => r.ist.rueckfrage).length,
+    ms: done.length ? Math.round(done.reduce((a, [, r]) => a + r.ms, 0) / done.length) : 0
+  };
+}
+const pct = (a, b) => b ? Math.round(a / b * 100) + "%" : "–";
+
+// ---------- Darstellung ----------
+const lvlClass = l => l === "Reminder" || l === "No Breach" ? "lv-rem" : l === "Employee Incident" ? "lv-ei" : l === "HR Referral" ? "lv-hr" : "lv-open";
+const pill = l => `<span class="lvl sm ${lvlClass(l)}">${esc(l)}</span>`;
+const mark = ok => ok === null ? `<span class="mk na" title="nicht geprüft">·</span>` : ok ? `<span class="mk ok" title="Soll erfüllt">✓</span>` : `<span class="mk bad" title="Soll nicht erfüllt">✗</span>`;
+
+function render() {
+  const m = metrics();
+  const st = R.running ? `Läuft · ${m.n} von ${Object.values(R.results).filter(r => r.status !== "abgebrochen").length || TESTCASES.length}` : R.finishedAt ? `Letzter Lauf ${R.finishedAt.toLocaleTimeString("de-CH", { hour: "2-digit", minute: "2-digit" })} · ${m.n} Fälle ausgewertet` : "Noch kein Lauf";
+  $("#status").textContent = st;
+  $("#run").disabled = R.running || !R.sample; $("#stop").disabled = !R.running;
+  $("#exMd").disabled = $("#exCsv").disabled = !m.n || R.running;
+  $("#tier").value = R.tier; $("#tier").disabled = R.running;
+  $("#noai").hidden = !R.ready || !!R.sample;
+  $("#kpis").innerHTML = kpis(m);
+  $("#checks").innerHTML = checkBars(m);
+  $("#rows").innerHTML = rows();
+}
+
+function kpis(m) {
+  const tile = (lab, val, sub, cls = "") => `<div class="kpi ${cls}"><span class="lab">${lab}</span><span class="kv">${val}</span><span class="hint">${sub}</span></div>`;
+  return tile("Fälle bestanden", m.n ? `${m.pass}<small>/${m.n}</small>` : "–", "alle geprüften Punkte erfüllt", m.n ? (m.pass === m.n ? "good" : "") : "")
+    + tile("Incident Level", pct(m.per.level.ok, m.per.level.n), `${m.per.level.ok} von ${m.per.level.n} im Soll-Bereich`)
+    + tile("Level zu tief", m.n ? m.tief : "–", "gefährlich: Fall wird unterschätzt", m.tief ? "bad" : "")
+    + tile("Level zu hoch", m.n ? m.hoch : "–", "unnötige Eskalation", m.hoch ? "warnish" : "")
+    + tile("Quelle gültig", pct(m.per.quelle.ok, m.per.quelle.n), "kein erfundener Risiko-Code", m.n && m.per.quelle.ok < m.per.quelle.n ? "bad" : "")
+    + tile("Namensschutz", pct(m.per.namen.ok, m.per.namen.n), "meldende Person nicht genannt", m.n && m.per.namen.ok < m.per.namen.n ? "bad" : "");
+}
+
+function checkBars(m) {
+  if (!m.n) return `<p class="hint">Nach dem Lauf steht hier die Trefferquote je Prüfpunkt.</p>`;
+  return CHECKS.map(([k, lab]) => {
+    const p = m.per[k], v = p.n ? p.ok / p.n : 0;
+    return `<div class="cb"><span class="cb-l">${lab}</span><span class="cb-bar"><i style="width:${(v * 100).toFixed(1)}%" class="${v === 1 ? "full" : v < .7 ? "low" : ""}"></i></span><span class="cb-v mono">${p.n ? p.ok + "/" + p.n : "–"}</span></div>`;
+  }).join("") + `<p class="hint">Ø Antwortzeit ${(m.ms / 1000).toFixed(1)} s · Rückfragen gestellt: ${m.rueck} · Fehler: ${m.fehler}</p>`;
+}
+
+function rows() {
+  const f = R.filter;
+  return TESTCASES.filter(t => {
+    const r = R.results[t.id];
+    if (f === "alle") return true;
+    if (f === "fehl") return r && r.status === "fertig" && !r.ev.pass;
+    if (f === "ok") return r && r.status === "fertig" && r.ev.pass;
+    return true;
+  }).map(t => {
+    const r = R.results[t.id], open = R.open[t.id];
+    const so = t.soll;
+    let res = `<span class="hint">${r ? esc(r.status) : "nicht gelaufen"}</span>`;
+    if (r && r.status === "läuft") res = `<span class="spin"></span><span class="hint">läuft</span>`;
+    if (r && r.status === "Fehler") res = `<span class="tag bad">Fehler</span> <span class="hint">${esc(r.error)}</span>`;
+    if (r && r.status === "fertig") res = (r.ev.pass ? `<span class="tag ok">bestanden</span>` : `<span class="tag bad">${r.ev.failed.length} Abweichung${r.ev.failed.length > 1 ? "en" : ""}</span>`) + (r.ev.dir ? ` <span class="tag ${r.ev.dir === "zu tief" ? "bad" : "neutral"}">${r.ev.dir}</span>` : "");
+    const sollL = so.level ? so.level.map(pill).join(" ") : `<span class="hint">nicht geprüft</span>`;
+    const istL = r && r.status === "fertig" ? pill(r.ist.level) : `<span class="hint">–</span>`;
+    return `<article class="tc ${r && r.status === "fertig" ? (r.ev.pass ? "pass" : "fail") : ""}">
+      <button class="tc-h" data-act="toggle" data-id="${t.id}" aria-expanded="${!!open}">
+        <span class="tc-id mono">${t.id}</span>
+        <span class="tc-t"><b>${esc(t.titel)}</b><span class="hint">${esc(t.fokus)}</span></span>
+        <span class="tc-lv"><span class="lab">Soll</span>${sollL}</span>
+        <span class="tc-lv"><span class="lab">Ist</span>${istL}</span>
+        <span class="tc-r">${res}</span>
+        <span class="chev">${open ? "−" : "+"}</span>
+      </button>
+      ${open ? detail(t, r) : ""}
+    </article>`;
+  }).join("");
+}
+
+function detail(t, r) {
+  const fin = r && r.status === "fertig";
+  const cmp = CHECKS.map(([k, lab]) => {
+    const c = fin ? r.ev.checks[k] : null;
+    const sollTxt = c ? c.soll : sollText(t, k);
+    return `<tr class="${c && c.ok === false ? "neg" : ""}"><th>${lab}</th><td>${esc(sollTxt)}</td><td>${c ? esc(c.ist) : "–"}</td><td>${c ? mark(c.ok) : ""}</td></tr>`;
+  }).join("");
+  return `<div class="tc-b">
+    <div class="tc-grid">
+      <div class="stack">
+        <div><span class="lab">Meldung (Eingabe an den Assistenten)</span><blockquote>${esc(t.meldung)}</blockquote></div>
+        <div><span class="lab">Begründung Soll</span><p class="small">${esc(t.begruendung)}</p></div>
+        ${fin ? `<div><span class="lab">Level-Berechnung durch das Tool</span><p class="small">${esc(r.ist.levelWhy)}</p></div>` : ""}
+        ${fin && r.ist.antwort ? `<div><span class="lab">Antwort des Assistenten</span><p class="small">${esc(r.ist.antwort)}</p></div>` : ""}
+        ${fin && r.ist.verstossWhy ? `<div><span class="lab">Begründung Verstoss</span><p class="small">${esc(r.ist.verstossWhy)}</p></div>` : ""}
+      </div>
+      <div class="stack">
+        <table class="cmp"><thead><tr><th></th><th>Soll</th><th>Ist</th><th></th></tr></thead><tbody>${cmp}</tbody></table>
+        ${fin ? `<details><summary>Fallakte des Assistenten (Summary, Description, Begründungen)</summary>
+          <dl class="dl"><dt>Summary</dt><dd>${esc(r.ist.summary) || "–"}</dd><dt>Description</dt><dd>${esc(r.ist.description) || "–"}</dd><dt>Risk</dt><dd>${esc(r.ist.risk_desc) || "–"}</dd><dt>Behavior</dt><dd>${esc(r.ist.behavior_desc) || "–"}</dd></dl></details>
+          <details><summary>Rohantwort (JSON)</summary><pre>${esc(JSON.stringify(r.raw, null, 2))}</pre></details>` : ""}
+        <div class="row"><button class="btn sm" data-act="one" data-id="${t.id}" ${R.running || !R.sample ? "disabled" : ""}>Nur diesen Fall laufen lassen</button></div>
+      </div>
+    </div>
+  </div>`;
+}
+
+function sollText(t, k) {
+  const so = t.soll;
+  return ({
+    person: so.person ? so.person + " " + person(so.person).name : "keine Person",
+    verstoss: arr(so.verstoss).join(" / "),
+    policy: so.keinCode ? "kein Code" : so.policies.join(" / ") || "–",
+    quelle: "nur Katalog-Codes", risk: so.risk.join(" / ") || "–", behavior: so.behavior.join(" / ") || "–",
+    sonder: so.sonder.join(", ") || "keine", datum: so.datum ? arr(so.datum).map(fmtD).join(" / ") : "–",
+    meldeweg: so.meldeweg || "–", level: so.level ? so.level.join(" / ") : "nicht geprüft",
+    namen: (so.noNames || []).length ? "ohne " + so.noNames.join(", ") : "keine Vorgabe"
+  })[k];
+}
+
+// ---------- Export ----------
+function reportMd() {
+  const m = metrics(), d = R.finishedAt || new Date();
+  const L = [];
+  L.push("# Testbericht Incident-Tool", "", `Lauf vom ${fmtD(d)} ${d.toLocaleTimeString("de-CH", { hour: "2-digit", minute: "2-digit" })} · Modellstufe «${R.tier}» · ${m.n} von ${TESTCASES.length} Fällen ausgewertet`, "",
+    "Jede Meldung wurde mit denselben Anweisungen wie im Incident-Tool (erster Durchgang der Fallerfassung, ohne Antwort auf Rückfragen) an das Sprachmodell geschickt. Incident Level, Pattern Aggregation und Sonderregeln rechnet das Tool deterministisch aus den Ist-Werten.", "",
+    "## Kennzahlen", "", "| Kennzahl | Wert |", "|---|---|",
+    `| Fälle bestanden | ${m.pass} von ${m.n} |`, `| Level zu tief | ${m.tief} |`, `| Level zu hoch | ${m.hoch} |`, `| Level offen (Bewertung fehlt) | ${m.offen} |`, `| Rückfragen gestellt | ${m.rueck} |`, `| Fehler | ${m.fehler} |`, `| Ø Antwortzeit | ${(m.ms / 1000).toFixed(1)} s |`, "",
+    "## Trefferquote je Prüfpunkt", "", "| Prüfpunkt | Treffer | Quote |", "|---|---|---|");
+  CHECKS.forEach(([k, lab]) => L.push(`| ${lab} | ${m.per[k].ok}/${m.per[k].n} | ${pct(m.per[k].ok, m.per[k].n)} |`));
+  L.push("", "## Übersicht", "", "| Nr. | Fall | Soll Level | Ist Level | Ergebnis | Abweichungen |", "|---|---|---|---|---|---|");
+  TESTCASES.forEach(t => {
+    const r = R.results[t.id]; const fin = r && r.status === "fertig";
+    L.push(`| ${t.id} | ${t.titel} | ${t.soll.level ? t.soll.level.join(" / ") : "–"} | ${fin ? r.ist.level : "–"} | ${fin ? (r.ev.pass ? "bestanden" : "nicht bestanden") + (r.ev.dir ? " (" + r.ev.dir + ")" : "") : r ? r.status : "nicht gelaufen"} | ${fin ? r.ev.failed.map(k => CHECKS.find(c => c[0] === k)[1]).join(", ") || "–" : "–"} |`);
+  });
+  L.push("", "## Abweichungen im Detail", "");
+  const fails = TESTCASES.filter(t => R.results[t.id] && R.results[t.id].status === "fertig" && !R.results[t.id].ev.pass);
+  if (!fails.length) L.push("Keine.");
+  fails.forEach(t => {
+    const r = R.results[t.id];
+    L.push(`### ${t.id} ${t.titel}`, "", `Fokus: ${t.fokus}`, "", `> ${t.meldung}`, "", "| Prüfpunkt | Soll | Ist |", "|---|---|---|");
+    r.ev.failed.forEach(k => { const c = r.ev.checks[k]; L.push(`| ${CHECKS.find(x => x[0] === k)[1]} | ${c.soll} | ${c.ist} |`); });
+    L.push("", `Begründung Soll: ${t.begruendung}`, "", `Level-Berechnung: ${r.ist.levelWhy}`, "");
+  });
+  return L.join("\n");
+}
+function reportCsv() {
+  const q = v => `"${String(v ?? "").replace(/"/g, '""')}"`;
+  const head = ["Nr", "Fall", "Fokus", "Ergebnis", "Richtung", ...CHECKS.flatMap(([, l]) => [l + " Soll", l + " Ist", l + " ok"]), "Antwortzeit ms"];
+  const lines = [head.map(q).join(";")];
+  TESTCASES.forEach(t => {
+    const r = R.results[t.id]; const fin = r && r.status === "fertig";
+    const cells = [t.id, t.titel, t.fokus, fin ? (r.ev.pass ? "bestanden" : "nicht bestanden") : r ? r.status : "nicht gelaufen", fin ? r.ev.dir : ""];
+    CHECKS.forEach(([k]) => { const c = fin ? r.ev.checks[k] : null; cells.push(c ? c.soll : sollText(t, k), c ? c.ist : "", c ? (c.ok === null ? "n/a" : c.ok ? "ja" : "nein") : ""); });
+    cells.push(fin ? r.ms : "");
+    lines.push(cells.map(q).join(";"));
+  });
+  return "﻿" + lines.join("\r\n");
+}
+async function save(ext) {
+  const dl = await window.claude?.use?.("downloads");
+  const d = R.finishedAt || new Date();
+  const name = `Testbericht_${isoD(d)}.${ext}`;
+  const data = ext === "md" ? reportMd() : reportCsv();
+  const msg = $("#exmsg");
+  if (!dl) { msg.textContent = "Download ist in dieser Ansicht nicht verfügbar."; return; }
+  try { await dl.save({ filename: name, data }); msg.textContent = name + " gespeichert."; }
+  catch (e) { msg.textContent = e && e.code === "declined" ? "Download abgebrochen." : "Download nicht möglich (" + (e && e.code || "Fehler") + ")."; }
+}
+
+// ---------- Ereignisse ----------
+document.addEventListener("click", e => {
+  const b = e.target.closest("[data-act]"); if (!b) return;
+  const a = b.dataset.act, id = b.dataset.id;
+  if (a === "toggle") { R.open[id] = !R.open[id]; render(); }
+  if (a === "one") runAll([id]);
+  if (a === "filter") { R.filter = b.dataset.v; document.querySelectorAll("[data-act=filter]").forEach(x => x.classList.toggle("on", x === b)); render(); }
+  if (a === "openAll") { const all = TESTCASES.every(t => R.open[t.id]); TESTCASES.forEach(t => R.open[t.id] = !all); render(); }
+});
+$("#run").addEventListener("click", () => runAll());
+$("#stop").addEventListener("click", stop);
+$("#tier").addEventListener("change", e => { R.tier = e.target.value; });
+$("#exMd").addEventListener("click", () => save("md"));
+$("#exCsv").addEventListener("click", () => save("csv"));
+$("#ncases").textContent = TESTCASES.length;
+
+render();
+(async () => {
+  try { R.sample = await window.claude?.use?.("sample"); } catch { R.sample = null; }
+  R.ready = true; render();
+})();
+
+</script>
+</body></html>
